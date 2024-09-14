@@ -2,7 +2,7 @@ import os
 from PIL import Image
 import pytest
 from unittest.mock import patch, MagicMock
-from image_to_pdf import get_file_list, validate_path, convert_images_to_pdf
+from src.image_to_pdf import get_file_list, validate_path, convert_images_to_pdf
 
 # Mock data
 mock_image_list: list[str] = ["image1.jpg", "image2.png", "image3.jpeg"]

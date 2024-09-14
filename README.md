@@ -8,7 +8,7 @@ A Python package that provides a script to convert images to PDF files as well a
 
 Before you can use this package, you need to have the following installed:
 
--   Python 3.9 or higher
+-   Python 3.11 or higher
 -   Pillow 10.4.0 or higher
 
 To run the tests, you will also need:
@@ -64,7 +64,7 @@ https://github.com/user-attachments/assets/b497f280-93e8-46cb-9d8c-180014e79df1
 
 ## Contact
 
-Jeffery Fang - [jefferyfang02@gmail.com](mailto:jefferyfang02@gmail.com)
+Jeffery Fang - [jefferyfang324@gmail.com](mailto:jefferyfang324@gmail.com)
 
 ## Tools & Technologies
 
