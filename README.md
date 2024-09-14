@@ -64,7 +64,7 @@ https://github.com/user-attachments/assets/b497f280-93e8-46cb-9d8c-180014e79df1
 
 ## Contact
 
-Jeffery Fang - [jefferyfang324@gmail.com](mailto:jefferyfang324@gmail.com)
+Jeffery Fang - jefferyfang324@gmail.com
 
 ## Tools & Technologies
 
