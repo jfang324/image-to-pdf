@@ -37,6 +37,14 @@ To install the package, run the following command in your terminal:
 
 4. The script will now be installed in your python scripts directory where you can run it or add it to your PATH to be able to run it from anywhere.
 
+## GAllery & Demonstrations
+
+
+
+https://github.com/user-attachments/assets/b497f280-93e8-46cb-9d8c-180014e79df1
+
+
+
 ## Contact
 
 Jeffery Fang - [jefferyfang02@gmail.com](mailto:jefferyfang02@gmail.com)
