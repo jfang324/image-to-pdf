@@ -5,3 +5,4 @@ htmlcov
 .coverage
 *.egg-info
 build
+poetry.lock

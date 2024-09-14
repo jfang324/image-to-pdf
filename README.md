@@ -10,8 +10,11 @@ Before you can use this package, you need to have the following installed:
 
 -   Python 3.9 or higher
 -   Pillow 10.4.0 or higher
--   pytest (for testing only)
--   coverage (for testing only)
+
+To run the tests, you will also need:
+
+-   pytest
+-   coverage
 
 ### Installation
 
@@ -37,6 +40,24 @@ To install the package, run the following command in your terminal:
 
 4. The script will now be installed in your python scripts directory where you can run it or add it to your PATH to be able to run it from anywhere.
 
+5. To run the tests, install the development dependencies:
+
+    ```sh
+    pip install -r requirements-dev.txt
+    ```
+
+6. Run the tests:
+
+    ```sh
+    coverage run --branch --source=src -m pytest
+    ```
+
+7. Generate a coverage report:
+
+    ```sh
+    coverage report -m
+    ```
+
 ## Gallery & Demonstrations
 
 https://github.com/user-attachments/assets/b497f280-93e8-46cb-9d8c-180014e79df1
@@ -50,3 +71,5 @@ Jeffery Fang - [jefferyfang02@gmail.com](mailto:jefferyfang02@gmail.com)
 -   Python
 -   Pillow
 -   pytest
+-   coverage
+-   Poetry
