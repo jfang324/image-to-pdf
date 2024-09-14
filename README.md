@@ -1,6 +1,6 @@
 ## About The Project
 
-This project is a Python package that allows you to convert images to PDF files.
+A Python package that provides a script to convert images to PDF files as well as some helpful functions if you want to include that functionality in your own project.
 
 ## Getting Started
 
@@ -10,7 +10,7 @@ Before you can use this package, you need to have the following installed:
 
 -   Python 3.9 or higher
 -   Pillow 10.4.0 or higher
--   PyTest (for testing only)
+-   pytest (for testing only)
 -   coverage (for testing only)
 
 ### Installation
@@ -37,13 +37,9 @@ To install the package, run the following command in your terminal:
 
 4. The script will now be installed in your python scripts directory where you can run it or add it to your PATH to be able to run it from anywhere.
 
-## GAllery & Demonstrations
-
-
+## Gallery & Demonstrations
 
 https://github.com/user-attachments/assets/b497f280-93e8-46cb-9d8c-180014e79df1
-
-
 
 ## Contact
 
@@ -53,4 +49,4 @@ Jeffery Fang - [jefferyfang02@gmail.com](mailto:jefferyfang02@gmail.com)
 
 -   Python
 -   Pillow
--   PyTest
+-   pytest
