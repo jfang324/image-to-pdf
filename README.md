@@ -23,13 +23,13 @@ To install the package, run the following command in your terminal:
 1. Clone the repository:
 
     ```sh
-    git clone https://github.com/jfang324/image_to_pdf.git
+    git clone https://github.com/jfang324/image-to-pdf.git
     ```
 
 2. Navigate to the project directory:
 
     ```sh
-    cd image_to_pdf
+    cd image-to-pdf
     ```
 
 3. Install the package:

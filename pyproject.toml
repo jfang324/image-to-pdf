@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "image_to_pdf"
+name = "image-to-pdf"
 version = "1.0"
 description = "A Python package for converting images to PDF files."
 authors = ["Jeffery Fang <Jefferyfang324@gmail.com>"]
@@ -10,7 +10,7 @@ python = "^3.11"
 pillow = "^10.4.0"
 
 [tool.poetry.scripts]
-image_to_pdf = "image_to_pdf.main:main"
+image-to-pdf = "image_to_pdf.main:main" 
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
