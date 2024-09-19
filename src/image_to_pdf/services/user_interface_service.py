@@ -58,9 +58,21 @@ def prompt_list_selection(
 
         # Display the list of results
         stdscr.addstr(0, 0, f"{title}:", curses.color_pair(1))
+        stdscr.addstr(1, 0, "Use ", curses.color_pair(1))
+        stdscr.addstr("↑/↓", curses.color_pair(4))
+        stdscr.addstr(" for navigation, ", curses.color_pair(1))
+        stdscr.addstr("→", curses.color_pair(4))
+        stdscr.addstr(" to swap, ", curses.color_pair(1))
+        stdscr.addstr("←", curses.color_pair(4))
+        stdscr.addstr(" to exclude, ", curses.color_pair(1))
+        stdscr.addstr("ESC", curses.color_pair(4))
+        stdscr.addstr(" to exit, ", curses.color_pair(1))
+        stdscr.addstr("ENTER", curses.color_pair(4))
+        stdscr.addstr(" to proceed.", curses.color_pair(1))
+
         for i in range(page_start, page_end):
             if i == current_index:
-                stdscr.addstr(i - page_start + 1, 0, "> ", curses.color_pair(2))
+                stdscr.addstr(i - page_start + 2, 0, "> ", curses.color_pair(2))
 
                 if i == item_to_swap:
                     stdscr.addstr(
@@ -79,15 +91,15 @@ def prompt_list_selection(
                     )
             else:
                 if i == item_to_swap:
-                    stdscr.addstr(i - page_start + 1, 0, " ", curses.A_REVERSE)
+                    stdscr.addstr(i - page_start + 2, 0, " ", curses.A_REVERSE)
                     stdscr.addstr(" ")
                     stdscr.addstr(f" {result_list_copy[i]}", curses.color_pair(3))
                 elif result_list_copy[i] in excluded_files:
-                    stdscr.addstr(i - page_start + 1, 0, " ", curses.A_REVERSE)
+                    stdscr.addstr(i - page_start + 2, 0, " ", curses.A_REVERSE)
                     stdscr.addstr(" ")
                     stdscr.addstr(f" {result_list_copy[i]}", curses.color_pair(2))
                 else:
-                    stdscr.addstr(i - page_start + 1, 0, " ", curses.A_REVERSE)
+                    stdscr.addstr(i - page_start + 2, 0, " ", curses.A_REVERSE)
                     stdscr.addstr(" ")
                     stdscr.addstr(f" {result_list_copy[i]}")
         stdscr.addstr(
