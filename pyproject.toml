@@ -4,9 +4,10 @@ version = "1.0"
 description = "A Python package for converting images to PDF files."
 authors = ["Jeffery Fang <Jefferyfang324@gmail.com>"]
 readme = "README.md"
+repository = "https://github.com/jfang324/image-to-pdf"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = ">=3.9"
 pillow = "^10.4.0"
 
 [tool.poetry.scripts]
@@ -15,6 +16,10 @@ image-to-pdf = "image_to_pdf.main:main"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 coverage = "^7.6.1"
+
+
+[tool.poetry.group.windows.dependencies]
+windows-curses = "^2.3.3"
 
 [build-system]
 requires = ["poetry-core"]

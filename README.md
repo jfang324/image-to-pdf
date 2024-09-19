@@ -8,8 +8,9 @@ A Python package that provides a script to convert images to PDF files as well a
 
 Before you can use this package, you need to have the following installed:
 
--   Python 3.11 or higher
+-   Python 3.9, 3.10, or 3.11
 -   Pillow 10.4.0 or higher
+-   windows-curses (if you are using Windows)
 
 To run the tests, you will also need:
 
@@ -73,3 +74,4 @@ Jeffery Fang - jefferyfang324@gmail.com
 -   pytest
 -   coverage
 -   Poetry
+-   Curses/Windows-Curses

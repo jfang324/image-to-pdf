@@ -2,7 +2,11 @@ import os
 from PIL import Image
 import pytest
 from unittest.mock import patch, MagicMock
-from src.image_to_pdf import get_file_list, validate_path, convert_images_to_pdf
+from src.image_to_pdf.services.file_access_service import (
+    get_file_list,
+    validate_path,
+    convert_images_to_pdf,
+)
 
 # Mock data
 mock_image_list: list[str] = ["image1.jpg", "image2.png", "image3.jpeg"]
@@ -78,7 +82,6 @@ class TestConvertImagesToPdf:
         mock_save.assert_called_once_with(
             "/path/to/output.pdf",
             "PDF",
-            resolution=100.0,
             save_all=True,
             append_images=[
                 Image.new("RGB", (100, 100)) for i in range(len(mock_image_list))

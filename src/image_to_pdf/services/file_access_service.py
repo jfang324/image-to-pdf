@@ -62,7 +62,6 @@ def convert_images_to_pdf(
     images[0].save(
         os.path.join(output_path, output_name + ".pdf"),
         "PDF",
-        resolution=100.0,
         save_all=True,
         append_images=images[1:],
     )
