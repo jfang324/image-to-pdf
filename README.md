@@ -61,7 +61,11 @@ To install the package, run the following command in your terminal:
 
 ## Gallery & Demonstrations
 
-https://github.com/user-attachments/assets/b497f280-93e8-46cb-9d8c-180014e79df1
+
+
+https://github.com/user-attachments/assets/971eba23-0fa4-4b72-8f21-49f61cb52f5f
+
+
 
 ## Contact
 
