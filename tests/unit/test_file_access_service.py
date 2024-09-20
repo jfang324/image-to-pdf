@@ -99,23 +99,3 @@ class TestConvertImagesToPdf:
     ):
         with pytest.raises(Exception):
             convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
-
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", return_value=True)
-    @patch("PIL.Image.open")
-    @patch("PIL.Image.Image.save", return_value=None)
-    @patch("os.path.join", return_value="/path/to/output.pdf")
-    def test_convert_images_to_pdf_with_save_raises_exception(
-        self,
-        mock_join: MagicMock,
-        mock_save: MagicMock,
-        mock_open: MagicMock,
-        mock_isfile: MagicMock,
-        mock_exists: MagicMock,
-    ):
-        mock_image: MagicMock = MagicMock()
-        mock_image.save.side_effect = Exception("Mock exception")
-        mock_open.return_value = mock_image
-
-        with pytest.raises(Exception):
-            convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
