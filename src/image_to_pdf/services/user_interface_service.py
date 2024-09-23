@@ -129,7 +129,7 @@ def prompt_list_selection(
                 result_list_copy[current_index] = temp
 
                 item_to_swap = None
-        elif key == ord("\n"):
+        elif key in [ord("\n"), curses.KEY_ENTER]:
             return [
                 result_list.index(result_list_copy[i])
                 for i in range(len(result_list))
