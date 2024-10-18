@@ -50,7 +50,7 @@ To install the package, run the following command in your terminal:
 6. Run the tests:
 
     ```sh
-    coverage run --branch --source=src -m pytest
+    coverage run -m pytest -v
     ```
 
 7. Generate a coverage report:
@@ -61,11 +61,7 @@ To install the package, run the following command in your terminal:
 
 ## Gallery & Demonstrations
 
-
-
 https://github.com/user-attachments/assets/971eba23-0fa4-4b72-8f21-49f61cb52f5f
-
-
 
 ## Contact
 
