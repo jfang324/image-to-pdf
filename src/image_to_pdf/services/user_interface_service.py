@@ -9,6 +9,7 @@ def prompt_user_input(stdscr: curses, message: str) -> str:
     :param message: The message to display to the user
     :return: The string entered by the user
     """
+
     curses.curs_set(1)
     user_input = ""
 
@@ -46,6 +47,7 @@ def prompt_list_selection(
     :param title: The title at the top of the list
     :return: The index of the selected item
     """
+
     result_list_copy: list[str] = result_list.copy()
     excluded_files: set[str] = set()
     current_index: int = 0
