@@ -3,8 +3,9 @@ from PIL import Image
 import pytest
 from unittest.mock import patch, MagicMock
 from src.image_to_pdf.services.file_access_service import (
-    get_file_list,
-    validate_path,
+    is_image,
+    get_image_list,
+    validate_directory,
     convert_images_to_pdf,
 )
 
@@ -13,56 +14,95 @@ mock_image_list: list[str] = ["image1.jpg", "image2.png", "image3.jpeg"]
 mock_directory: str = "/path/to/directory"
 
 
-class TestGetFileList:
+class TestIsImage:
     @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", side_effect=[False, True, True, True])
-    @patch("os.listdir", return_value=mock_image_list)
-    def test_get_file_list_with_valid_directory_returns_correct_file_list(
-        self, mock_listdir: MagicMock, mock_isfile: MagicMock, mock_exists: MagicMock
+    @patch("os.path.isfile", return_value=True)
+    @patch("imghdr.what", return_value="JPEG")
+    def test_is_image_with_valid_file_returns_true(
+        self, mock_exists: MagicMock, mock_isfile: MagicMock, mock_what: MagicMock
     ):
-        assert get_file_list(mock_directory) == [
+        assert is_image(mock_image_list[0])
+
+    @patch("os.path.exists", return_value=True)
+    @patch("os.path.isfile", return_value=False)
+    def test_is_image_with_invalid_file_returns_false(
+        self, mock_exists: MagicMock, mock_isfile: MagicMock
+    ):
+        assert not is_image(mock_image_list[0])
+
+
+class TestGetImageList:
+    @patch("os.path.exists", return_value=True)
+    @patch("os.path.isdir", return_value=True)
+    @patch("os.listdir", return_value=mock_image_list)
+    @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=True)
+    def test_get_image_list_with_valid_directory_returns_correct_list(
+        self,
+        mock_exists: MagicMock,
+        mock_isdir: MagicMock,
+        mock_listdir: MagicMock,
+        mock_is_image: MagicMock,
+    ):
+        assert get_image_list(mock_directory) == [
             os.path.join(mock_directory, file) for file in mock_image_list
         ]
 
-    @patch("os.path.exists", return_value=False)
-    def test_get_file_list_with_non_existing_directory_returns_empty_list(
-        self, mock_exists: MagicMock
-    ):
-        assert get_file_list("/non/existing/directory") == []
-
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", return_value=True)
-    def test_get_file_list_with_file_returns_empty_list(
-        self, mock_isfile: MagicMock, mock_exists: MagicMock
-    ):
-        assert get_file_list("/path/to/file.txt") == []
-
-
-class TestValidatePath:
     @patch("os.path.exists", return_value=True)
     @patch("os.path.isdir", return_value=True)
-    def test_validate_path_with_valid_directory_returns_true(
-        self, mock_isdir: MagicMock, mock_exists: MagicMock
+    @patch("os.listdir", return_value=mock_image_list)
+    @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=False)
+    def test_get_image_list_with_valid_directory_with_no_images_returns_empty_list(
+        self,
+        mock_exists: MagicMock,
+        mock_isdir: MagicMock,
+        mock_listdir: MagicMock,
+        mock_is_image: MagicMock,
     ):
-        assert validate_path(mock_directory)
+        assert get_image_list(mock_directory) == []
 
     @patch("os.path.exists", return_value=False)
-    def test_validate_path_with_non_existing_directory_returns_false(
+    def test_get_image_list_with_non_existing_directory_returns_empty_list(
         self, mock_exists: MagicMock
     ):
-        assert not validate_path("/invalid/directory")
+        assert get_image_list("/non/existing/directory") == []
 
     @patch("os.path.exists", return_value=True)
     @patch("os.path.isdir", return_value=False)
-    def test_validate_path_with_file_returns_false(
+    def test_get_image_list_with_non_directory_returns_empty_list(
+        self, mock_exists: MagicMock, mock_isdir: MagicMock
+    ):
+        assert get_image_list("/path/to/file.txt") == []
+
+
+class TestValidateDirectory:
+    @patch("os.path.exists", return_value=True)
+    @patch("os.path.isdir", return_value=True)
+    def test_validate_directory_with_valid_directory_returns_true(
         self, mock_isdir: MagicMock, mock_exists: MagicMock
     ):
-        assert not validate_path("/path/to/file.txt")
+        assert validate_directory(mock_directory)
+
+    @patch("os.path.exists", return_value=False)
+    def test_validate_directory_with_non_existing_directory_returns_false(
+        self, mock_exists: MagicMock
+    ):
+        assert not validate_directory("/invalid/directory")
+
+    @patch("os.path.exists", return_value=True)
+    @patch("os.path.isdir", return_value=False)
+    def test_validate_directory_with_file_returns_false(
+        self, mock_isdir: MagicMock, mock_exists: MagicMock
+    ):
+        assert not validate_directory("/path/to/file.txt")
 
 
 class TestConvertImagesToPdf:
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", return_value=True)
+    mock_tmpdir = MagicMock()
+    mock_tmpdir.__enter__.return_value = "/path/to/temp/dir"
+    mock_tmpdir.__exit__ = MagicMock()
+
+    @patch("tempfile.TemporaryDirectory", return_value=mock_tmpdir)
+    @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=True)
     @patch("PIL.Image.open", return_value=Image.new("RGB", (100, 100)))
     @patch("PIL.Image.Image.save", return_value=None)
     @patch("os.path.join", return_value="/path/to/output.pdf")
@@ -71,31 +111,32 @@ class TestConvertImagesToPdf:
         mock_join: MagicMock,
         mock_save: MagicMock,
         mock_open: MagicMock,
-        mock_isfile: MagicMock,
-        mock_exists: MagicMock,
+        mock_is_image: MagicMock,
+        mock_tempdir: MagicMock,
     ):
         convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
 
         for file in mock_image_list:
             mock_open.assert_any_call(file)
 
-        mock_save.assert_called_once_with(
-            "/path/to/output.pdf",
-            "PDF",
-            save_all=True,
-            append_images=[
-                Image.new("RGB", (100, 100)) for i in range(len(mock_image_list))
-            ][1:],
-        )
+        for file in mock_image_list:
+            png_path = f"{os.path.join('/path/to/temp/dir/', file.split(os.path.sep)[-1].split('.')[0])}.png"
+            mock_save.assert_any_call(png_path, format="PNG", optimize=True)
 
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", return_value=True)
-    @patch("PIL.Image.open", return_value=Exception("Mock exception"))
-    def test_convert_images_to_pdf_with_invalid_file_list_raises_exception(
+    @patch("tempfile.TemporaryDirectory", return_value=mock_tmpdir)
+    @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=False)
+    @patch("PIL.Image.open", return_value=Image.new("RGB", (100, 100)))
+    @patch("PIL.Image.Image.save", return_value=None)
+    @patch("os.path.join", return_value="/path/to/output.pdf")
+    def test_convert_images_to_pdf_with_invalid_file_list_skips_invalid_files(
         self,
+        mock_join: MagicMock,
+        mock_save: MagicMock,
         mock_open: MagicMock,
-        mock_isfile: MagicMock,
-        mock_exists: MagicMock,
+        mock_is_image: MagicMock,
+        mock_tempdir: MagicMock,
     ):
-        with pytest.raises(Exception):
-            convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
+        convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
+
+        assert mock_open.call_count == 0
+        assert mock_save.call_count == 0

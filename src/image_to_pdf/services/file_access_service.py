@@ -1,69 +1,99 @@
 import os
+import imghdr
 from PIL import Image
+import tempfile
 
 
-def get_file_list(path: str) -> list[str]:
+def is_image(file_path: str) -> bool:
     """
-    Get a list of all files in a directory.
+    Checks if a file is an image
 
-    :param path: The path to the directory.
-    :return: A list of all files in the directory.
+    :param file_path: The path to the file
+    :return: True if the file is an image, False otherwise
     """
+
+    return (
+        os.path.exists(file_path)
+        and os.path.isfile(file_path)
+        and imghdr.what(file_path) is not None
+    )
+
+
+def get_image_list(dir_path: str) -> list[str]:
+    """
+    Get a list of image files in a directory
+
+    :param dir_path: The path to the directory
+    :return: A list of all images in the directory
+    """
+
     try:
-        if not os.path.exists(path):
-            raise FileNotFoundError(f"The directory {path} does not exist.")
+        if not os.path.exists(dir_path):
+            raise FileNotFoundError(f"The directory {dir_path} does not exist")
 
-        if os.path.isfile(path):
-            raise Exception(f"{path} is not a directory.")
+        if not os.path.isdir(dir_path):
+            raise NotADirectoryError(f"{dir_path} is not a directory")
 
-        everything_list: list[str] = os.listdir(path)
-        file_list: list[str] = []
+        path_list: list[str] = os.listdir(dir_path)
+        image_list: list[str] = []
 
-        for item in everything_list:
-            if os.path.isfile(os.path.join(path, item)) and item.endswith(
-                (".png", ".jpg", ".jpeg")
-            ):
-                file_list.append(os.path.join(path, item))
+        for path in path_list:
+            full_path: str = os.path.join(dir_path, path)
 
-        return file_list
+            if is_image(full_path):
+                image_list.append(full_path)
+
+        return image_list
     except Exception as e:
         print(e)
         return []
 
 
-def validate_path(path: str) -> bool:
+def validate_directory(dir_path: str) -> bool:
     """
-    Validates if a path is a valid directory.
+    Validates if a path is a valid directory
 
-    :param path: The path to be validated.
-    :return: True if the path is a valid directory, False otherwise.
+    :param dir_path: The path to be validated
+    :return: True if the path is a valid directory, False otherwise
     """
-    if os.path.exists(path) and os.path.isdir(path):
+
+    if os.path.exists(dir_path) and os.path.isdir(dir_path):
         return True
     else:
         return False
 
 
 def convert_images_to_pdf(
-    file_list: list[str], output_path: str, output_name: str
+    image_list: list[str], output_path: str, output_name: str
 ) -> None:
     """
-    Converts a list of images to a PDF file.
+    Converts a list of images to a PDF file
 
-    :param file_list: A list of image files to be converted.
-    :param output_path: The path to the output directory.
-    :param output_name: The name of the output PDF file.
+    :param image_list: A list of image files to be converted
+    :param output_path: The path to the output directory
+    :param output_name: The name of the output PDF file
     """
-    images = []
-    for file in file_list:
-        if os.path.exists(file) and os.path.isfile(file):
-            img: Image.Image = Image.open(file)
-            img = img.convert("RGB")
-            images.append(img)
 
-    images[0].save(
-        os.path.join(output_path, output_name + ".pdf"),
-        "PDF",
-        save_all=True,
-        append_images=images[1:],
-    )
+    with tempfile.TemporaryDirectory() as temp_dir:
+        images: list[Image.Image] = []
+
+        for image in image_list:
+            if is_image(image):
+                img: Image.Image = Image.open(image)
+                png_path = f"{os.path.join(temp_dir, image.split(os.path.sep)[-1].split('.')[0])}.png"
+                img.save(
+                    png_path,
+                    format="PNG",
+                    optimize=True,
+                )
+
+                images.append(Image.open(png_path))
+
+        if len(images) > 0 and os.path.exists(output_path):
+            images[0].save(
+                f"{os.path.join(output_path, output_name)}.pdf",
+                quality=100,
+                save_all=True,
+                append_images=images[1:],
+                optimize=True,
+            )

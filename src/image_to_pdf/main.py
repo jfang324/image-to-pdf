@@ -32,26 +32,26 @@ def start(stdscr: curses) -> None:
             end()
         else:
             input_directory_path = input_directory_path or os.getcwd()
-            if validate_path(input_directory_path):
+            if validate_directory(input_directory_path):
                 break
             else:
                 message = f"'{input_directory_path}' is not a valid directory. Enter a valid directory"
 
     # Prompt user to select which files to include and in which order to convert to PDF
-    file_list: list[str] = get_file_list(input_directory_path)
-    processed_file_indexes: list[int] = prompt_list_selection(
+    image_list: list[str] = get_image_list(input_directory_path)
+    processed_image_indexes: list[int] = prompt_list_selection(
         stdscr,
-        [os.path.basename(file) for file in file_list],
+        [os.path.basename(image) for image in image_list],
         20,
         f"files in {input_directory_path}",
     )
 
-    if processed_file_indexes == None:
+    if processed_image_indexes == None:
         end()
 
     # Remove any files that were excluded from the list of files and exit if no files are left/found
-    processed_file_list: list[str] = [file_list[i] for i in processed_file_indexes]
-    while len(processed_file_list) == 0:
+    processed_image_list: list[str] = [image_list[i] for i in processed_image_indexes]
+    while len(processed_image_list) == 0:
         stdscr.clear()
         stdscr.addstr(
             0, 0, "No images found. Press escape to exit.", curses.color_pair(1)
@@ -69,7 +69,7 @@ def start(stdscr: curses) -> None:
             end()
         else:
             output_directory_path = output_directory_path or os.getcwd()
-            if validate_path(output_directory_path):
+            if validate_directory(output_directory_path):
                 break
             else:
                 message = f"'{output_directory_path}' is not a valid directory. Enter a valid directory"
@@ -102,7 +102,7 @@ def start(stdscr: curses) -> None:
             break
 
     # Convert images to PDF and save the PDF file
-    convert_images_to_pdf(processed_file_list, output_directory_path, output_name)
+    convert_images_to_pdf(processed_image_list, output_directory_path, output_name)
     print(f"{output_name}.pdf saved to {output_directory_path}")
 
 
