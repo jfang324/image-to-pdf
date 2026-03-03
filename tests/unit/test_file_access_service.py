@@ -61,17 +61,19 @@ class TestGetImageList:
         assert get_image_list(mock_directory) == []
 
     @patch("os.path.exists", return_value=False)
-    def test_get_image_list_with_non_existing_directory_returns_empty_list(
+    def test_get_image_list_with_non_existing_directory_raises_error(
         self, mock_exists: MagicMock
     ):
-        assert get_image_list("/non/existing/directory") == []
+        with pytest.raises(FileNotFoundError):
+            get_image_list("/non/existing/directory")
 
     @patch("os.path.exists", return_value=True)
     @patch("os.path.isdir", return_value=False)
-    def test_get_image_list_with_non_directory_returns_empty_list(
+    def test_get_image_list_with_non_directory_raises_error(
         self, mock_exists: MagicMock, mock_isdir: MagicMock
     ):
-        assert get_image_list("/path/to/file.txt") == []
+        with pytest.raises(NotADirectoryError):
+            get_image_list("/path/to/file.txt")
 
 
 class TestValidateDirectory:
@@ -97,11 +99,7 @@ class TestValidateDirectory:
 
 
 class TestConvertImagesToPdf:
-    mock_tmpdir = MagicMock()
-    mock_tmpdir.__enter__.return_value = "/path/to/temp/dir"
-    mock_tmpdir.__exit__ = MagicMock()
-
-    @patch("tempfile.TemporaryDirectory", return_value=mock_tmpdir)
+    @patch("os.path.isdir", return_value=True)
     @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=True)
     @patch("PIL.Image.open", return_value=Image.new("RGB", (100, 100)))
     @patch("PIL.Image.Image.save", return_value=None)
@@ -112,18 +110,14 @@ class TestConvertImagesToPdf:
         mock_save: MagicMock,
         mock_open: MagicMock,
         mock_is_image: MagicMock,
-        mock_tempdir: MagicMock,
+        mock_isdir: MagicMock,
     ):
         convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
 
-        for file in mock_image_list:
-            mock_open.assert_any_call(file)
+        assert mock_is_image.call_count == 3
+        assert mock_open.call_count == 6
 
-        for file in mock_image_list:
-            png_path = f"{os.path.join('/path/to/temp/dir/', file.split(os.path.sep)[-1].split('.')[0])}.png"
-            mock_save.assert_any_call(png_path, format="PNG", optimize=True)
-
-    @patch("tempfile.TemporaryDirectory", return_value=mock_tmpdir)
+    @patch("os.path.isdir", return_value=True)
     @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=False)
     @patch("PIL.Image.open", return_value=Image.new("RGB", (100, 100)))
     @patch("PIL.Image.Image.save", return_value=None)
@@ -134,7 +128,7 @@ class TestConvertImagesToPdf:
         mock_save: MagicMock,
         mock_open: MagicMock,
         mock_is_image: MagicMock,
-        mock_tempdir: MagicMock,
+        mock_isdir: MagicMock,
     ):
         convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
 

@@ -1,14 +1,25 @@
+import argparse
 import curses
 import os
-from .services.file_access_service import *
-from .services.user_interface_service import *
+import time
+from typing import Union
+
+from .services.file_access_service import (
+    convert_images_to_pdf,
+    get_image_list,
+    validate_directory,
+)
+from .services.user_interface_service import (
+    prompt_list_selection,
+    prompt_user_input,
+)
 
 
 def end() -> None:
     quit()
 
 
-def start(stdscr: curses) -> None:
+def start(stdscr: curses.window, page_size: int = 20, quality: int = 75, optimize: bool = False) -> None:
     # Main body of the program
 
     # Initialize curses settings for UI
@@ -24,14 +35,13 @@ def start(stdscr: curses) -> None:
     message: str = (
         "Enter the directory containing the images (default is current directory)"
     )
-    input_directory_path: str = ""
+    input_directory_path: Union[str, None] = ""
     while True:
-        input_directory_path = prompt_user_input(stdscr, message)
-
-        if input_directory_path == None:
+        result: Union[str, None] = prompt_user_input(stdscr, message)
+        if result is None:
             end()
         else:
-            input_directory_path = input_directory_path or os.getcwd()
+            input_directory_path = result or os.getcwd()
             if validate_directory(input_directory_path):
                 break
             else:
@@ -39,15 +49,17 @@ def start(stdscr: curses) -> None:
 
     # Prompt user to select which files to include and in which order to convert to PDF
     image_list: list[str] = get_image_list(input_directory_path)
-    processed_image_indexes: list[int] = prompt_list_selection(
+    processed_image_indexes: Union[list[int], None] = prompt_list_selection(
         stdscr,
         [os.path.basename(image) for image in image_list],
-        20,
+        page_size,
         f"files in {input_directory_path}",
     )
 
-    if processed_image_indexes == None:
+    if processed_image_indexes is None:
         end()
+
+    assert processed_image_indexes is not None
 
     # Remove any files that were excluded from the list of files and exit if no files are left/found
     processed_image_list: list[str] = [image_list[i] for i in processed_image_indexes]
@@ -61,14 +73,14 @@ def start(stdscr: curses) -> None:
             end()
 
     # Prompt user for a valid directory to save the PDF file
-    message = f"Enter the path to save the PDF file (default is current directory)"
-    output_directory_path: str = ""
+    message = "Enter the path to save the PDF file (default is current directory)"
+    output_directory_path: Union[str, None] = ""
     while True:
-        output_directory_path = prompt_user_input(stdscr, message)
-        if output_directory_path == None:
+        result = prompt_user_input(stdscr, message)
+        if result is None:
             end()
         else:
-            output_directory_path = output_directory_path or os.getcwd()
+            output_directory_path = result or os.getcwd()
             if validate_directory(output_directory_path):
                 break
             else:
@@ -102,13 +114,38 @@ def start(stdscr: curses) -> None:
             break
 
     # Convert images to PDF and save the PDF file
-    convert_images_to_pdf(processed_image_list, output_directory_path, output_name)
-    print(f"{output_name}.pdf saved to {output_directory_path}")
+    start_time = time.time()
+    convert_images_to_pdf(processed_image_list, output_directory_path, output_name, quality, optimize)
+    elapsed_time = time.time() - start_time
+    print(f"{output_name}.pdf saved to {output_directory_path} ({elapsed_time:.2f}s)")
 
 
 def main():
-    # wrap start in curses.wrapper to initialize curses
-    curses.wrapper(start)
+    parser = argparse.ArgumentParser(description="Convert images to PDF")
+    parser.add_argument(
+        "-n",
+        "--page-size",
+        type=int,
+        default=20,
+        help="Number of files to display per page (default: 20)",
+    )
+    parser.add_argument(
+        "-q",
+        "--quality",
+        type=int,
+        default=75,
+        help="PDF quality (1-100, default: 75)",
+    )
+    parser.add_argument(
+        "-o",
+        "--optimize",
+        action="store_true",
+        default=False,
+        help="Optimize PDF file size",
+    )
+    args = parser.parse_args()
+
+    curses.wrapper(lambda stdscr: start(stdscr, args.page_size, args.quality, args.optimize))
 
 
 if __name__ == "__main__":
