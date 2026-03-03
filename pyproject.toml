@@ -16,10 +16,22 @@ image-to-pdf = "image_to_pdf.main:main"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 coverage = "^7.6.1"
+pyright = "^1.1.389"
+ruff = "^0.8.0"
 
 
 [tool.poetry.group.windows.dependencies]
 windows-curses = "^2.3.3"
+
+[tool.ruff]
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "T20", "FIX", "ARG", "PTH"]
+ignore = ["E501", "B008", "PTH110", "PTH112", "PTH113", "PTH118", "PTH119", "PTH208", "PTH109", "B904", "T201"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["image_to_pdf"]
 
 [build-system]
 requires = ["poetry-core"]
