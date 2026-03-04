@@ -19,7 +19,12 @@ def end() -> None:
     quit()
 
 
-def start(stdscr: curses.window, page_size: int = 20, quality: int = 75, optimize: bool = False) -> None:
+def start(
+    stdscr: curses.window,
+    page_size: int = 20,
+    quality: int = 75,
+    optimize: bool = False,
+) -> None:
     # Main body of the program
 
     # Initialize curses settings for UI
@@ -89,22 +94,13 @@ def start(stdscr: curses.window, page_size: int = 20, quality: int = 75, optimiz
     # Prompt user for a valid name for the PDF file
     message = "Enter the name of the PDF file (default is 'output')"
     output_name: str = ""
+    invalid_chars: set[str] = {"\\", "/", ":", "*", "?", '"', "<", ">", "|"}
+
     while True:
         output_name = prompt_user_input(stdscr, message) or "output"
-        invalid_characters: list[str] = [
-            "\\",
-            "/",
-            ":",
-            "*",
-            "?",
-            '"',
-            "<",
-            ">",
-            "|",
-        ]
         valid: bool = True
 
-        for invalid_character in invalid_characters:
+        for invalid_character in invalid_chars:
             if invalid_character in output_name:
                 message = f"'{output_name}' is not a valid name. Enter a valid name"
                 valid = False
@@ -115,7 +111,9 @@ def start(stdscr: curses.window, page_size: int = 20, quality: int = 75, optimiz
 
     # Convert images to PDF and save the PDF file
     start_time = time.time()
-    convert_images_to_pdf(processed_image_list, output_directory_path, output_name, quality, optimize)
+    convert_images_to_pdf(
+        processed_image_list, output_directory_path, output_name, quality, optimize
+    )
     elapsed_time = time.time() - start_time
     print(f"{output_name}.pdf saved to {output_directory_path} ({elapsed_time:.2f}s)")
 
@@ -145,7 +143,9 @@ def main():
     )
     args = parser.parse_args()
 
-    curses.wrapper(lambda stdscr: start(stdscr, args.page_size, args.quality, args.optimize))
+    curses.wrapper(
+        lambda stdscr: start(stdscr, args.page_size, args.quality, args.optimize)
+    )
 
 
 if __name__ == "__main__":
