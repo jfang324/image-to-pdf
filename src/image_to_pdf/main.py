@@ -3,6 +3,8 @@ import curses
 import os
 import time
 from typing import Union
+from .state import AppState
+from .app import ImageToPDFApp
 
 from .services.file_access_service import (
     convert_images_to_pdf,
@@ -143,9 +145,13 @@ def main():
     )
     args = parser.parse_args()
 
-    curses.wrapper(
-        lambda stdscr: start(stdscr, args.page_size, args.quality, args.optimize)
-    )
+    # curses.wrapper(
+    #     lambda stdscr: start(stdscr, args.page_size, args.quality, args.optimize)
+    # )
+
+    print("Hello World!")
+    app = ImageToPDFApp()
+    app.run()
 
 
 if __name__ == "__main__":
