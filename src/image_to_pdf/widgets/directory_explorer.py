@@ -23,7 +23,7 @@ class DirectoryExplorer(Widget):
 
     DEFAULT_CSS = """
         DirectoryExplorer {
-            border: solid;
+            border: solid $primary;
             height: 1fr;
         }
         
@@ -36,8 +36,11 @@ class DirectoryExplorer(Widget):
     current_directory = reactive(".", init=False)
 
     class DirectoryChanged(Message):
+        """Message posted when the user navigates to a different directory."""
+
         @property
         def control(self) -> Widget:
+            """Required for @on decorator selector matching."""
             return self._control
 
         def __init__(self, new_directory: str, control: Widget) -> None:
