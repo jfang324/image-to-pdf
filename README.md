@@ -15,23 +15,23 @@ A Python TUI application for converting images to PDF files.
 
 ## Installation
 
+### With pip
+
 ```sh
 git clone https://github.com/jfang324/image-to-pdf.git
 cd image-to-pdf
 pip install .
 ```
 
-On Windows, curses is required:
+### With Poetry
 
 ```sh
-pip install windows-curses
+git clone https://github.com/jfang324/image-to-pdf.git
+cd image-to-pdf
+poetry install
 ```
 
-Or install with Poetry for automatic Windows curses handling:
-
-```sh
-poetry install --with windows
-```
+This will install the package in editable mode with all dependencies.
 
 ## Usage
 
@@ -102,7 +102,13 @@ poetry run textual --help
 To run the app with live-reload and the dev console:
 
 ```sh
-poetry run textual run --dev -m image_to_pdf.app
+poetry run textual run --dev image_to_pdf.app:ImageToPDFApp
+```
+
+To pass CLI arguments, use `--` to separate Textual flags from app flags:
+
+```sh
+poetry run textual run --dev image_to_pdf.app:ImageToPDFApp -- --quality 90 --optimize
 ```
 
 Note: Poetry 2.0 removed `poetry shell`. To activate the virtual environment in your shell:
