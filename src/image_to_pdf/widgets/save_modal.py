@@ -1,9 +1,9 @@
+from typing import Union
+
 from textual.app import ComposeResult
+from textual.containers import Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Input, Label
-from textual.containers import Vertical
-from textual.reactive import reactive
-from typing import Union
 
 
 class SaveModal(ModalScreen[Union[str, None]]):
@@ -46,10 +46,21 @@ class SaveModal(ModalScreen[Union[str, None]]):
         with Vertical(id="dialog"):
             yield Label("Save PDF", id="title")
             yield Label("Enter a file name:", id="subtitle")
-            yield Input(placeholder="e.g. class_final_report", id="input")
+            yield Input(
+                placeholder="e.g. class_final_report",
+                id="input",
+                validate_on=["changed", "submitted"],
+            )
+
+    def _validate_and_dismiss(self, value: str) -> None:
+        stripped = value.strip()
+        if stripped:
+            self.dismiss(stripped)
+        else:
+            self.notify("Please enter a file name.", severity="error", timeout=3)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.dismiss(event.value)
+        self._validate_and_dismiss(event.value)
 
     def action_cancel_request(self) -> None:
         self.app.pop_screen()

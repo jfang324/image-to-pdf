@@ -1,12 +1,11 @@
 import os
-from typing import Set
 
-from textual.widgets import ListView, ListItem, Label
-from textual.containers import Vertical
-from textual.reactive import reactive
-from textual.message import Message
-from textual.widget import Widget
 from textual.app import ComposeResult
+from textual.containers import Vertical
+from textual.message import Message
+from textual.reactive import reactive
+from textual.widget import Widget
+from textual.widgets import Label, ListItem, ListView
 
 
 class FileOrganizer(Widget):
@@ -39,7 +38,7 @@ class FileOrganizer(Widget):
     """
 
     file_list: reactive[list[str]] = reactive([], init=False)
-    _selected_swap_indices: reactive[Set[int]] = reactive(set)
+    _selected_swap_indices: reactive[set[int]] = reactive(set)
 
     class SwapRequest(Message):
         """A custom message to inform the parent that the position of 2 files needs to be swapped
@@ -71,9 +70,7 @@ class FileOrganizer(Widget):
 
     def _build_list_view(self) -> None:
         list_view = self.query_one("#file_list", ListView)
-        list_items = [
-            ListItem(Label(os.path.basename(path))) for path in self.file_list
-        ]
+        list_items = [ListItem(Label(os.path.basename(path))) for path in self.file_list]
         list_view.clear()
         list_view.extend(list_items)
         self._selected_swap_indices = set()

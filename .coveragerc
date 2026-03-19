@@ -7,5 +7,4 @@ omit =
     tests/*
     */__init__.py
     */main.py
-    */services/user_interface_service.py
 show_missing = True

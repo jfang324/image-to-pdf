@@ -1,4 +1,3 @@
-import imghdr
 import os
 from io import BytesIO
 
@@ -54,14 +53,14 @@ def convert_images_to_pdf(
 
     for image in image_list:
         if is_image(image):
-            img: Image.Image = Image.open(image)
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
+            with Image.open(image) as img:
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
 
-            buffer = BytesIO()
-            img.save(buffer, format="PNG")
-            buffer.seek(0)
-            images.append(Image.open(buffer))
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                buffer.seek(0)
+                images.append(Image.open(buffer))
 
     if images and os.path.exists(output_path):
         images[0].save(

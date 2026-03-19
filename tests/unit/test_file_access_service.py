@@ -1,67 +1,120 @@
-import os
-from PIL import Image
-import pytest
-from unittest.mock import patch, MagicMock
-from src.image_to_pdf.services.file_access_service import (
-    is_image,
-    convert_images_to_pdf,
-)
+from pathlib import Path
 
-# Mock data
-mock_image_list: list[str] = ["image1.jpg", "image2.png", "image3.jpeg"]
-mock_directory: str = "/path/to/directory"
+import pytest
+from PIL import Image
+
+from src.image_to_pdf.services.file_access_service import (
+    convert_images_to_pdf,
+    is_image,
+)
 
 
 class TestIsImage:
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", return_value=True)
-    @patch("imghdr.what", return_value="JPEG")
-    def test_is_image_with_valid_file_returns_true(
-        self, mock_exists: MagicMock, mock_isfile: MagicMock, mock_what: MagicMock
-    ):
-        assert is_image(mock_image_list[0])
+    def test_is_image_returns_true_for_png(self, tmp_path: Path) -> None:
+        img_path = tmp_path / "test.png"
+        Image.new("RGB", (10, 10)).save(img_path)
+        assert is_image(str(img_path)) is True
 
-    @patch("os.path.exists", return_value=True)
-    @patch("os.path.isfile", return_value=False)
-    def test_is_image_with_invalid_file_returns_false(
-        self, mock_exists: MagicMock, mock_isfile: MagicMock
-    ):
-        assert not is_image(mock_image_list[0])
+    def test_is_image_returns_true_for_jpeg(self, tmp_path: Path) -> None:
+        img_path = tmp_path / "test.jpg"
+        Image.new("RGB", (10, 10)).save(img_path, format="JPEG")
+        assert is_image(str(img_path)) is True
+
+    def test_is_image_returns_true_for_gif(self, tmp_path: Path) -> None:
+        img_path = tmp_path / "test.gif"
+        Image.new("RGB", (10, 10)).save(img_path, format="GIF")
+        assert is_image(str(img_path)) is True
+
+    def test_is_image_returns_false_for_nonexistent_file(self) -> None:
+        assert is_image("/nonexistent/file.png") is False
+
+    def test_is_image_returns_false_for_text_file(self, tmp_path: Path) -> None:
+        txt_path = tmp_path / "test.txt"
+        txt_path.write_text("not an image")
+        assert is_image(str(txt_path)) is False
+
+    def test_is_image_returns_false_for_directory(self, tmp_path: Path) -> None:
+        assert is_image(str(tmp_path)) is False
 
 
 class TestConvertImagesToPdf:
-    @patch("os.path.isdir", return_value=True)
-    @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=True)
-    @patch("PIL.Image.open", return_value=Image.new("RGB", (100, 100)))
-    @patch("PIL.Image.Image.save", return_value=None)
-    @patch("os.path.join", return_value="/path/to/output.pdf")
-    def test_convert_images_to_pdf_with_valid_file_list_and_output_path_and_name(
-        self,
-        mock_join: MagicMock,
-        mock_save: MagicMock,
-        mock_open: MagicMock,
-        mock_is_image: MagicMock,
-        mock_isdir: MagicMock,
-    ):
-        convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
+    def test_convert_images_to_pdf_raises_on_empty_list(self, tmp_path: Path) -> None:
+        with pytest.raises(ValueError, match="image_list cannot be empty"):
+            convert_images_to_pdf([], str(tmp_path), "output")
 
-        assert mock_is_image.call_count == 3
-        assert mock_open.call_count == 6
+    def test_convert_images_to_pdf_raises_on_invalid_output_path(self) -> None:
+        with pytest.raises(ValueError, match="output_path must be a valid directory"):
+            convert_images_to_pdf(["image.jpg"], "/nonexistent/path", "output")
 
-    @patch("os.path.isdir", return_value=True)
-    @patch("src.image_to_pdf.services.file_access_service.is_image", return_value=False)
-    @patch("PIL.Image.open", return_value=Image.new("RGB", (100, 100)))
-    @patch("PIL.Image.Image.save", return_value=None)
-    @patch("os.path.join", return_value="/path/to/output.pdf")
-    def test_convert_images_to_pdf_with_invalid_file_list_skips_invalid_files(
-        self,
-        mock_join: MagicMock,
-        mock_save: MagicMock,
-        mock_open: MagicMock,
-        mock_is_image: MagicMock,
-        mock_isdir: MagicMock,
-    ):
-        convert_images_to_pdf(mock_image_list, "/path/to/output", "output")
+    def test_convert_images_to_pdf_raises_on_empty_output_name(self, tmp_path: Path) -> None:
+        img_path = tmp_path / "image.jpg"
+        Image.new("RGB", (10, 10)).save(img_path, format="JPEG")
+        with pytest.raises(ValueError, match="output_name cannot be empty"):
+            convert_images_to_pdf([str(img_path)], str(tmp_path), "")
 
-        assert mock_open.call_count == 0
-        assert mock_save.call_count == 0
+    def test_convert_images_to_pdf_raises_on_whitespace_only_output_name(
+        self, tmp_path: Path
+    ) -> None:
+        img_path = tmp_path / "image.jpg"
+        Image.new("RGB", (10, 10)).save(img_path, format="JPEG")
+        with pytest.raises(ValueError, match="output_name cannot be empty"):
+            convert_images_to_pdf([str(img_path)], str(tmp_path), "   ")
+
+    def test_convert_images_to_pdf_skips_nonexistent_images(self, tmp_path: Path) -> None:
+        output_path = tmp_path / "output"
+        output_path.mkdir()
+        pdf_path = output_path / "output.pdf"
+        convert_images_to_pdf(["/nonexistent/image.jpg"], str(output_path), "output")
+        assert not pdf_path.exists()
+
+    def test_convert_images_to_pdf_creates_valid_pdf(self, tmp_path: Path) -> None:
+        img1_path = tmp_path / "image1.jpg"
+        img2_path = tmp_path / "image2.png"
+        Image.new("RGB", (100, 100), color="red").save(img1_path, format="JPEG")
+        Image.new("RGB", (100, 100), color="blue").save(img2_path)
+        output_path = tmp_path / "output"
+        output_path.mkdir()
+        convert_images_to_pdf(
+            [str(img1_path), str(img2_path)],
+            str(output_path),
+            "combined",
+        )
+        pdf_path = output_path / "combined.pdf"
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 0
+
+    def test_convert_images_to_pdf_preserves_image_order(self, tmp_path: Path) -> None:
+        colors = ["red", "green", "blue"]
+        img_paths = []
+        for i, color in enumerate(colors):
+            img_path = tmp_path / f"image{i}.jpg"
+            Image.new("RGB", (50, 50), color=color).save(img_path, format="JPEG")
+            img_paths.append(str(img_path))
+        output_path = tmp_path / "output"
+        output_path.mkdir()
+        convert_images_to_pdf(
+            [img_paths[2], img_paths[0], img_paths[1]],
+            str(output_path),
+            "ordered",
+        )
+        pdf_path = output_path / "ordered.pdf"
+        assert pdf_path.exists()
+
+    def test_convert_images_to_pdf_converts_rgba_mode(self, tmp_path: Path) -> None:
+        img_path = tmp_path / "image.png"
+        Image.new("RGBA", (50, 50), color=(255, 0, 0, 128)).save(img_path)
+        output_path = tmp_path / "output"
+        output_path.mkdir()
+        convert_images_to_pdf([str(img_path)], str(output_path), "rgba_test")
+        pdf_path = output_path / "rgba_test.pdf"
+        assert pdf_path.exists()
+        assert pdf_path.stat().st_size > 0
+
+    def test_convert_images_to_pdf_converts_palette_mode(self, tmp_path: Path) -> None:
+        img_path = tmp_path / "image.gif"
+        Image.new("P", (50, 50)).save(img_path)
+        output_path = tmp_path / "output"
+        output_path.mkdir()
+        convert_images_to_pdf([str(img_path)], str(output_path), "palette_test")
+        pdf_path = output_path / "palette_test.pdf"
+        assert pdf_path.exists()

@@ -32,7 +32,7 @@ class DirectoryExplorer(Widget):
             border: solid $primary;
             height: 1fr;
         }
-        
+
         DirectoryExplorer DirectoryTree {
             margin-left: 1;
             margin-right: 1;
@@ -79,9 +79,7 @@ class DirectoryExplorer(Widget):
     def watch_current_directory(self) -> None:
         self._reload_directory_tree(self.current_directory)
 
-    def on_directory_tree_directory_selected(
-        self, event: DirectoryTree.DirectorySelected
-    ) -> None:
+    def on_directory_tree_directory_selected(self, event: DirectoryTree.DirectorySelected) -> None:
         new_directory = str(event.path)
 
         self.post_message(self.DirectoryChanged(new_directory, self))

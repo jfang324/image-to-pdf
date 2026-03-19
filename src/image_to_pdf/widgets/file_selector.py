@@ -1,10 +1,10 @@
-from textual.widgets import SelectionList
-from textual.widget import Widget
-from textual.reactive import reactive
 from textual.app import ComposeResult
 from textual.containers import Vertical
-from textual.widgets.selection_list import Selection
 from textual.message import Message
+from textual.reactive import reactive
+from textual.widget import Widget
+from textual.widgets import SelectionList
+from textual.widgets.selection_list import Selection
 
 
 class FileSelector(Widget):
@@ -23,7 +23,7 @@ class FileSelector(Widget):
             border: solid $primary;
             height: 1fr;
         }
-        
+
         FileSelector SelectionList {
             height: 100%;
         }
@@ -72,9 +72,7 @@ class FileSelector(Widget):
 
     def _build_selection_list(self) -> None:
         selection_list = self.query_one("#file_list", SelectionList)
-        selections = [
-            Selection(name, path, selected) for name, path, selected in self.file_list
-        ]
+        selections = [Selection(name, path, selected) for name, path, selected in self.file_list]
         selection_list.clear_options()
         selection_list.add_options(selections)
 
@@ -85,9 +83,7 @@ class FileSelector(Widget):
 
         self._previous_selection = set()
 
-    def on_selection_list_selected_changed(
-        self, event: SelectionList.SelectedChanged
-    ) -> None:
+    def on_selection_list_selected_changed(self, event: SelectionList.SelectedChanged) -> None:
         selected_files: list[str] = event.selection_list.selected
         deselected: list[str] = list(self._previous_selection - set(selected_files))
 

@@ -1,18 +1,19 @@
-from textual.app import App, ComposeResult
-from textual.widgets import Footer, Static
-from textual.reactive import reactive
-from textual.containers import Horizontal, Vertical
-from .widgets.directory_explorer import DirectoryExplorer
-from textual import on
-from .widgets.file_selector import FileSelector
 import os
-from .widgets.file_organizer import FileOrganizer
-from .widgets.save_modal import SaveModal
-from .services.file_access_service import is_image, convert_images_to_pdf
-from textual import work
 import time
 from dataclasses import dataclass
 from typing import Union
+
+from textual import on, work
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal, Vertical
+from textual.reactive import reactive
+from textual.widgets import Footer
+
+from .services.file_access_service import convert_images_to_pdf, is_image
+from .widgets.directory_explorer import DirectoryExplorer
+from .widgets.file_organizer import FileOrganizer
+from .widgets.file_selector import FileSelector
+from .widgets.save_modal import SaveModal
 
 
 @dataclass
@@ -25,6 +26,8 @@ class ImageToPDFApp(App):
     """The core Textual application class for top level event handling
 
     Attributes:
+        quality (int): An integer ranging from 1 to 100 that determines how much quality is preserved in the PDF generation
+        optimize (bool): Whether or not an effort will be made to compress the final PDF
     """
 
     DEFAULT_CSS = """
@@ -64,9 +67,7 @@ class ImageToPDFApp(App):
                     file_list=ImageToPDFApp.input_directory_files,
                 )
             with Vertical():
-                yield FileOrganizer().data_bind(
-                    file_list=ImageToPDFApp.current_selected_files
-                )
+                yield FileOrganizer().data_bind(file_list=ImageToPDFApp.current_selected_files)
         yield Footer()
 
     @work(thread=True)
@@ -88,10 +89,8 @@ class ImageToPDFApp(App):
                 self.notify,
                 f"{output_file_name}.pdf saved to {self.output_directory} ({elapsed_time:.2f}s)",
             )
-        except (OSError, ValueError) as e:
-            self.call_from_thread(
-                self.notify, message=f"Failed to save PDF: {e}", severity="error"
-            )
+        except (OSError, ValueError, PermissionError, FileNotFoundError) as e:
+            self.call_from_thread(self.notify, message=f"Failed to save PDF: {e}", severity="error")
             self.log.error("PDF conversion failed", exception=e)
 
     def action_request_save(self) -> None:
@@ -99,6 +98,10 @@ class ImageToPDFApp(App):
 
     def _on_save_modal_close(self, output_file_name: Union[str, None]) -> None:
         if output_file_name is None:
+            return
+
+        if not self.current_selected_files:
+            self.notify("No files selected - please select at least one image.", severity="error")
             return
 
         self._handle_save_request(output_file_name)
@@ -125,13 +128,11 @@ class ImageToPDFApp(App):
                 if not is_image(full_path):
                     continue
 
-                results.append(
-                    (path, full_path, full_path in current_selected_files_set)
-                )
+                results.append((path, full_path, full_path in current_selected_files_set))
 
             return results
-        except OSError:
-            self.notify(message="Failed to scan directory", severity="error")
+        except OSError as e:
+            self.notify(message=f"Failed to scan directory: {e}", severity="error")
             return []
 
     def watch_input_directory(self) -> None:
@@ -142,21 +143,15 @@ class ImageToPDFApp(App):
         self.input_directory_files = new_input_directory_files
 
     @on(DirectoryExplorer.DirectoryChanged, "#input_directory")
-    def on_input_directory_changed(
-        self, event: DirectoryExplorer.DirectoryChanged
-    ) -> None:
+    def on_input_directory_changed(self, event: DirectoryExplorer.DirectoryChanged) -> None:
         self.input_directory = event.new_directory
 
     @on(DirectoryExplorer.DirectoryChanged, "#output_directory")
-    def on_output_directory_changed(
-        self, event: DirectoryExplorer.DirectoryChanged
-    ) -> None:
+    def on_output_directory_changed(self, event: DirectoryExplorer.DirectoryChanged) -> None:
         self.output_directory = event.new_directory
 
     @on(FileSelector.SelectionChanged)
-    def on_image_selector_selection_changed(
-        self, event: FileSelector.SelectionChanged
-    ) -> None:
+    def on_image_selector_selection_changed(self, event: FileSelector.SelectionChanged) -> None:
         selected_files = event.selected_files
         deselected_files = set(event.deselected_files)
 
@@ -167,11 +162,7 @@ class ImageToPDFApp(App):
         new_current_selected_files_set = set(new_current_selected_files)
 
         new_current_selected_files.extend(
-            [
-                file
-                for file in selected_files
-                if file not in new_current_selected_files_set
-            ]
+            [file for file in selected_files if file not in new_current_selected_files_set]
         )
 
         self.current_selected_files = new_current_selected_files
