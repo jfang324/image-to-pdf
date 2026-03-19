@@ -7,10 +7,24 @@ from textual import on
 from .widgets.file_selector import FileSelector
 import os
 from .widgets.file_organizer import FileOrganizer
+from .widgets.save_modal import SaveModal
+from .services.file_access_service import is_image, convert_images_to_pdf
+from textual import work
+import time
+from dataclasses import dataclass
+
+
+@dataclass
+class PDFConfig:
+    quality: int = 75
+    optimize: bool = False
 
 
 class ImageToPDFApp(App):
-    """The core Textual application class for managing the UI and state of the image to PDF converter."""
+    """The core Textual application class for top level event handling
+
+    Attributes:
+    """
 
     DEFAULT_CSS = """
         Vertical {
@@ -19,54 +33,82 @@ class ImageToPDFApp(App):
         }
     """
 
+    BINDINGS = [("ctrl+s", "request_save", "Save file")]
+
     input_directory = reactive("")
     output_directory = reactive("")
     input_directory_files: reactive[list[str]] = reactive([])
     current_selected_files: reactive[list[str]] = reactive([])
 
-    def compose(self) -> ComposeResult:
+    def __init__(self, quality: int = 75, optimize: bool = False) -> None:
+        super().__init__()
+        self.config = PDFConfig(quality=quality, optimize=optimize)
 
+    def compose(self) -> ComposeResult:
         with Horizontal():
             with Vertical():
                 yield DirectoryExplorer(
-                    directory_path=self.input_directory,
                     title="Input Directory",
                     id="input_directory",
-                )
+                ).data_bind(current_directory=ImageToPDFApp.input_directory)
                 yield DirectoryExplorer(
-                    directory_path=self.output_directory,
                     title="Output Directory",
                     id="output_directory",
-                )
+                ).data_bind(current_directory=ImageToPDFApp.output_directory)
             with Vertical():
                 yield FileSelector(
-                    current_directory=self.input_directory,
-                    id="image_selector",
+                    title="Image Selector",
                 ).data_bind(
-                    file_list=ImageToPDFApp.input_directory_files,
                     current_directory=ImageToPDFApp.input_directory,
+                    file_list=ImageToPDFApp.input_directory_files,
                 )
-            with Vertical(id="image_organizer"):
-                yield FileOrganizer(id="file_organizer").data_bind(
+            with Vertical():
+                yield FileOrganizer().data_bind(
                     file_list=ImageToPDFApp.current_selected_files
                 )
-
         yield Footer()
 
+    @work(thread=True)
+    def _handle_save_request(self, output_file_name: str = "output") -> None:
+        try:
+            start_time = time.time()
+
+            convert_images_to_pdf(
+                self.current_selected_files,
+                self.output_directory,
+                output_file_name,
+                quality=self.config.quality,
+                optimize=self.config.optimize,
+            )
+
+            elapsed_time = time.time() - start_time
+
+            self.call_from_thread(
+                self.notify,
+                f"{output_file_name}.pdf saved to {self.output_directory} ({elapsed_time:.2f}s)",
+            )
+        except Exception as e:
+            self.call_from_thread(self.notify, f"Something went wrong")
+            self.log(e)
+
+    def action_request_save(self) -> None:
+        self.push_screen(SaveModal(), self._on_save_modal_close)
+
+    def _on_save_modal_close(self, output_file_name: str | None) -> None:
+        if output_file_name is None:
+            return
+
+        self._handle_save_request(output_file_name)
+        self.notify("Job started, you will be notified on completion")
+
     def on_mount(self) -> None:
-        """Initialize on app startup."""
+        """Initialize on app startup"""
         cwd = os.getcwd()
         self.input_directory = cwd
         self.output_directory = cwd
-        self.input_directory_files = self.scan_directory(cwd)
-        self.current_selected_files = []
-
-        # Initialize DirectoryExplorers with the current directory
-        self.query_one("#input_directory", DirectoryExplorer).current_directory = cwd
-        self.query_one("#output_directory", DirectoryExplorer).current_directory = cwd
 
     def scan_directory(self, directory: str) -> list[tuple[str, str, bool]]:
-        """Scan the input directory and return a list of (name, path, selected)."""
+        """Scan the input directory and return a list of (name, path, selected)"""
         try:
             directory_contents = os.listdir(directory)
             current_selected_files = set(self.current_selected_files)
@@ -78,23 +120,24 @@ class ImageToPDFApp(App):
                     os.path.join(directory, path) in current_selected_files,
                 )
                 for path in directory_contents
-                if not path.startswith(".")
-                and os.path.isfile(os.path.join(directory, path))
+                if not path.startswith(".") and is_image(os.path.join(directory, path))
             ]
         except OSError:
             self.notify("Failed to scan directory")
             return []
 
+    def watch_input_directory(self) -> None:
+        if not self.input_directory:
+            return
+
+        new_input_directory_files = self.scan_directory(self.input_directory)
+        self.input_directory_files = new_input_directory_files
+
     @on(DirectoryExplorer.DirectoryChanged, "#input_directory")
     def on_input_directory_changed(
         self, event: DirectoryExplorer.DirectoryChanged
     ) -> None:
-        self.input_directory_files = self.scan_directory(event.new_directory)
         self.input_directory = event.new_directory
-        # self.query_one("#input_directory", DirectoryExplorer).border_subtitle = (
-        #     event.new_directory
-        # )
-        self.mutate_reactive(ImageToPDFApp.input_directory_files)
 
     @on(DirectoryExplorer.DirectoryChanged, "#output_directory")
     def on_output_directory_changed(
@@ -102,34 +145,39 @@ class ImageToPDFApp(App):
     ) -> None:
         self.output_directory = event.new_directory
 
-    @on(FileSelector.SelectionChanged, "#image_selector")
+    @on(FileSelector.SelectionChanged)
     def on_image_selector_selection_changed(
         self, event: FileSelector.SelectionChanged
     ) -> None:
         selected_files = event.selected_files
-        deselected_files = event.deselected_files
-        current_selected_files = set(self.current_selected_files)
+        deselected_files = set(event.deselected_files)
 
-        for file in selected_files:
-            if file not in current_selected_files:
-                self.current_selected_files.append(file)
+        new_current_selected_files = [
+            file for file in self.current_selected_files if file not in deselected_files
+        ]
 
-        for file in deselected_files:
-            index = self.current_selected_files.index(file)
-            del self.current_selected_files[index]
+        new_current_selected_files_set = set(new_current_selected_files)
 
-        self.mutate_reactive(ImageToPDFApp.current_selected_files)
-
-        # self.notify(f"selected_images: {selected_files}")
-        # self.notify(f"deselected_images: {deselected_files}")
-        # self.notify(f"current_images: {self.current_selected_files}")
-
-    @on(FileOrganizer.SwapRequest, "#file_organizer")
-    def on_file_organizer_swap(self, event: FileOrganizer.SwapRequest) -> None:
-        """Swap files at the given indices."""
-        files = list(self.current_selected_files)
-        files[event.index1], files[event.index2] = (
-            files[event.index2],
-            files[event.index1],
+        new_current_selected_files.extend(
+            [
+                file
+                for file in selected_files
+                if file not in new_current_selected_files_set
+            ]
         )
-        self.current_selected_files = files
+
+        self.current_selected_files = new_current_selected_files
+
+    @on(FileOrganizer.SwapRequest)
+    def on_file_organizer_swap(self, event: FileOrganizer.SwapRequest) -> None:
+        new_current_selected_files = list(self.current_selected_files)
+
+        (
+            new_current_selected_files[event.index_1],
+            new_current_selected_files[event.index_2],
+        ) = (
+            new_current_selected_files[event.index_2],
+            new_current_selected_files[event.index_1],
+        )
+
+        self.current_selected_files = new_current_selected_files

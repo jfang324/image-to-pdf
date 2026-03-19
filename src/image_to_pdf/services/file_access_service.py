@@ -20,53 +20,6 @@ def is_image(file_path: str) -> bool:
     )
 
 
-def get_image_list(dir_path: str) -> list[str]:
-    """
-    Get a list of image files in a directory
-
-    :param dir_path: The path to the directory
-    :return: A list of all images in the directory
-    :raises FileNotFoundError: If the directory does not exist
-    :raises NotADirectoryError: If the path is not a directory
-    :raises PermissionError: If the directory cannot be accessed
-    """
-
-    if not os.path.exists(dir_path):
-        raise FileNotFoundError(f"The directory {dir_path} does not exist")
-
-    if not os.path.isdir(dir_path):
-        raise NotADirectoryError(f"{dir_path} is not a directory")
-
-    try:
-        path_list: list[str] = os.listdir(dir_path)
-    except PermissionError:
-        raise PermissionError(f"Permission denied to access directory: {dir_path}")
-
-    image_list: list[str] = []
-
-    for path in path_list:
-        full_path: str = os.path.join(dir_path, path)
-
-        if is_image(full_path):
-            image_list.append(full_path)
-
-    return image_list
-
-
-def validate_directory(dir_path: str) -> bool:
-    """
-    Validates if a path is a valid directory
-
-    :param dir_path: The path to be validated
-    :return: True if the path is a valid directory, False otherwise
-    """
-
-    if os.path.exists(dir_path) and os.path.isdir(dir_path):
-        return True
-    else:
-        return False
-
-
 def convert_images_to_pdf(
     image_list: list[str],
     output_path: str,

@@ -8,7 +8,15 @@ from textual.message import Message
 
 
 class FileSelector(Widget):
-    """A widget that allows users to select from a list of files."""
+    """A widget that allows users to select from a list of files
+
+    Attributes:
+        title (str): The title to be displayed in the widget border
+
+    Reactive Attributes:
+        current_directory (str): The directory path that this widget will source files from
+        file_list (list[tuple[str, str, bool]]): A list of tuples that represent files in the directory in the format (display_name, path, selected)
+    """
 
     DEFAULT_CSS = """
         FileSelector {
@@ -21,15 +29,21 @@ class FileSelector(Widget):
         }
     """
 
-    file_list: reactive[list[tuple[str, str, bool]]] = reactive([], init=False)
     current_directory: reactive[str] = reactive("")
+    file_list: reactive[list[tuple[str, str, bool]]] = reactive([])
 
     class SelectionChanged(Message):
-        """Message posted when the user changes their selection."""
+        """A custom message to inform the parent of a change in selected items
+
+        Attributes:
+            selected_files (list[str]): A list of paths for the currently selected files
+            deselected_files (list[str]): A list of paths for the files that were de-selected
+            control (Widget): A reference to the widget sending the message
+        """
 
         @property
         def control(self) -> Widget:
-            """Required for @on decorator selector matching."""
+            """Required for @on decorator selector matching"""
             return self._control
 
         def __init__(
@@ -45,24 +59,18 @@ class FileSelector(Widget):
 
     def __init__(
         self,
-        file_list: list[tuple[str, str, bool]] | None = None,
-        current_directory: str = "",
         title: str = "File Selector",
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
         self.border_title = title
-        if file_list is not None:
-            self.file_list = file_list
-        self.current_directory = current_directory
-        self._previous_selection = set()
+        self._previous_selection: set[str] = set()
 
     def compose(self) -> ComposeResult:
         with Vertical():
             yield SelectionList[str](id="file_list")
 
     def _build_selection_list(self) -> None:
-        """Build the SelectionList from file_list."""
         selection_list = self.query_one("#file_list", SelectionList)
         selections = [
             Selection(name, path, selected) for name, path, selected in self.file_list
@@ -70,28 +78,18 @@ class FileSelector(Widget):
         selection_list.clear_options()
         selection_list.add_options(selections)
 
-    def on_mount(self) -> None:
-        """Populate SelectionList on initial mount."""
-        if self.file_list:
+    def watch_current_directory(self) -> None:
+        """Update the SelectionList if current_directory changes (this would change the files available)"""
+        if self._is_mounted:
             self._build_selection_list()
 
-    def watch_file_list(self, file_list: list[tuple[str, str, bool]]) -> None:
-        """Update the SelectionList when file_list changes via data_bind."""
-        if not self.is_mounted:
-            return
-        self._previous_selection = {path for _, path, selected in file_list if selected}
-        self._build_selection_list()
+        self._previous_selection = set()
 
     def on_selection_list_selected_changed(
         self, event: SelectionList.SelectedChanged
     ) -> None:
-        selected_files = event.selection_list.selected
-        current_set = set(selected_files)
+        selected_files: list[str] = event.selection_list.selected
+        deselected: list[str] = list(self._previous_selection - set(selected_files))
 
-        # Skip if selection hasn't actually changed
-        if current_set == self._previous_selection:
-            return
-
-        deselected = self._previous_selection - current_set
-        self._previous_selection = current_set
-        self.post_message(self.SelectionChanged(selected_files, list(deselected), self))
+        self._previous_selection = set(selected_files)
+        self.post_message(self.SelectionChanged(selected_files, deselected, self))

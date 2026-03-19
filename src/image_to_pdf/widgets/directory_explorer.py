@@ -11,15 +11,21 @@ from textual.widgets import DirectoryTree
 
 
 class FilteredDirectoryTree(DirectoryTree):
-    """A custom DirectoryTree widget that filters out files and hidden directories."""
+    """A custom DirectoryTree widget that filters out files and hidden directories"""
 
     def filter_paths(self, paths: Iterable[Path]) -> list[Path]:
-        """Return only directories that are not hidden."""
         return [p for p in paths if not p.name.startswith(".") and p.is_dir()]
 
 
 class DirectoryExplorer(Widget):
-    """A widget that allows users to explore directories."""
+    """A widget that allows users to explore directories
+
+    Attributes:
+        title (str): The title to be displayed in the widget border
+
+    Reactive Attributes:
+        current_directory (str): The directory path that will act as the root of the directory explorer
+    """
 
     DEFAULT_CSS = """
         DirectoryExplorer {
@@ -33,14 +39,19 @@ class DirectoryExplorer(Widget):
         }
     """
 
-    current_directory = reactive(".", init=False)
+    current_directory = reactive("")
 
     class DirectoryChanged(Message):
-        """Message posted when the user navigates to a different directory."""
+        """A custom message to inform the parent the directory has been changed
+
+        Attributes:
+            new_directory (str): The path of the new root directory
+            control (Widget): A reference to the widget sending the message
+        """
 
         @property
         def control(self) -> Widget:
-            """Required for @on decorator selector matching."""
+            """Required for @on decorator selector matching"""
             return self._control
 
         def __init__(self, new_directory: str, control: Widget) -> None:
@@ -48,37 +59,32 @@ class DirectoryExplorer(Widget):
             self.new_directory = new_directory
             self._control = control
 
-    def __init__(
-        self, directory_path: str = ".", title: str = "Directory Explorer", **kwargs
-    ) -> None:
+    def __init__(self, title: str = "Directory Explorer", **kwargs) -> None:
         super().__init__(**kwargs)
         self.border_title = title
-        self.border_subtitle = directory_path
-        self.current_directory = directory_path
 
     def compose(self) -> ComposeResult:
         with Vertical():
             yield FilteredDirectoryTree(self.current_directory, id="directory_tree")
 
-    def watch_current_directory(self, new_directory: str) -> None:
+    def _reload_directory_tree(self, new_directory: str) -> None:
         self.border_subtitle = new_directory
-        if self.is_mounted:
-            self._reload_tree(new_directory)
-            self.post_message(self.DirectoryChanged(new_directory, self))
 
-    def _reload_tree(self, new_directory: str) -> None:
-        try:
-            tree = self.query_one("#directory_tree", FilteredDirectoryTree)
-            tree.root.collapse()
-            tree.path = new_directory
-            tree.reload()
-        except Exception as e:
-            self.notify(f"Failed to reload directory: {e}")
+        if self._is_mounted:
+            directory_tree = self.query_one("#directory_tree", FilteredDirectoryTree)
+
+            directory_tree.path = new_directory
+            directory_tree.root.collapse()
+
+    def watch_current_directory(self) -> None:
+        self._reload_directory_tree(self.current_directory)
 
     def on_directory_tree_directory_selected(
         self, event: DirectoryTree.DirectorySelected
     ) -> None:
-        self.current_directory = str(event.path)
+        new_directory = str(event.path)
+
+        self.post_message(self.DirectoryChanged(new_directory, self))
 
     @on(events.Key)
     def on_key(self, event: events.Key) -> None:
@@ -86,7 +92,6 @@ class DirectoryExplorer(Widget):
             return
 
         parent = Path(self.current_directory).parent
-        if parent != Path(self.current_directory):
-            self.current_directory = str(parent)
 
-        event.stop()
+        if parent != Path(self.current_directory):
+            self.post_message(self.DirectoryChanged(str(parent), self))

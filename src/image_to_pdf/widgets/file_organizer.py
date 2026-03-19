@@ -1,5 +1,3 @@
-"""File organizer widget for reordering selected files via swap."""
-
 import os
 from typing import Set
 
@@ -11,23 +9,14 @@ from textual.widget import Widget
 from textual.app import ComposeResult
 
 
-class FileListItem(ListItem):
-    """ListItem that displays a filename but stores the full file path.
+class FileOrganizer(Widget):
+    """Widget that allows users to swap positions of files in a list
 
     Attributes:
-        file_path: The complete path to the file.
-    """
+        title (str): The title to be displayed in the widget border
 
-    def __init__(self, display_text: str, file_path: str) -> None:
-        super().__init__(Label(display_text))
-        self.file_path = file_path
-
-
-class FileOrganizer(Widget):
-    """Widget that allows users to swap positions of files in a list.
-
-    Users can select two items to swap their positions. Selected items
-    are visually highlighted until the swap is completed.
+    Reactive Attributes:
+        file_list (list[str]): A list of full paths for the currently selected files
     """
 
     DEFAULT_CSS = """
@@ -50,18 +39,15 @@ class FileOrganizer(Widget):
     """
 
     file_list: reactive[list[str]] = reactive([], init=False)
-    """List of file paths to display in the organizer."""
-
     _selected_swap_indices: reactive[Set[int]] = reactive(set)
-    """Set of indices currently selected for a swap operation."""
 
     class SwapRequest(Message):
-        """Emitted when two items are selected to be swapped.
+        """A custom message to inform the parent that the position of 2 files needs to be swapped
 
         Attributes:
-            index1: The index of the first item to swap.
-            index2: The index of the second item to swap.
-            control: The FileOrganizer widget that sent this message.
+            index_1 (int): The index of the first item to swap
+            index_2 (int): The index of the second item to swap
+            control (Widget): A reference to the widget sending the message
         """
 
         @property
@@ -69,13 +55,11 @@ class FileOrganizer(Widget):
             """Required for @on decorator selector matching."""
             return self._control
 
-        def __init__(self, index1: int, index2: int, control: Widget) -> None:
-            if index1 == index2:
-                raise ValueError("Cannot swap an item with itself")
-            self.index1 = index1
-            self.index2 = index2
-            self._control = control
+        def __init__(self, index_1: int, index_2: int, control: Widget) -> None:
             super().__init__()
+            self.index_1 = index_1
+            self.index_2 = index_2
+            self._control = control
 
     def __init__(self, title: str = "File Organizer", **kwargs):
         super().__init__(**kwargs)
@@ -85,44 +69,25 @@ class FileOrganizer(Widget):
         with Vertical():
             yield ListView(id="file_list")
 
-    def on_mount(self) -> None:
-        if self.file_list:
-            self._build_list_view()
-
     def _build_list_view(self) -> None:
         list_view = self.query_one("#file_list", ListView)
         list_items = [
-            FileListItem(self._get_display_name(path), path) for path in self.file_list
+            ListItem(Label(os.path.basename(path))) for path in self.file_list
         ]
         list_view.clear()
         list_view.extend(list_items)
         self._selected_swap_indices = set()
 
-    def _get_display_name(self, path: str) -> str:
-        """Extract filename from path for display.
-
-        Args:
-            path: Full file path.
-
-        Returns:
-            The base filename, or the original path if basename fails.
-        """
-        try:
-            return os.path.basename(path) or path
-        except (TypeError, ValueError):
-            return path
-
     def watch_file_list(self) -> None:
-        if not self.is_mounted:
-            return
-
         self._build_list_view()
 
     def watch__selected_swap_indices(self) -> None:
-        """Update visual styling for selected items."""
+        """Update visual styling for selected items"""
         if not self.is_mounted:
             return
-        list_view = self.query_one("#file_list", ListView)
+
+        list_view: ListView = self.query_one("#file_list", ListView)
+
         for i, child in enumerate(list_view.children):
             if i in self._selected_swap_indices:
                 child.add_class("selected-for-swap")
@@ -130,17 +95,14 @@ class FileOrganizer(Widget):
                 child.remove_class("selected-for-swap")
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
-        """Toggle selection; when 2 selected, emit swap message."""
+        """Toggle selection; when 2 selected, emit swap message"""
         index = event.index
 
-        if index in self._selected_swap_indices:
-            new_set = self._selected_swap_indices.copy()
-            new_set.discard(index)
-            self._selected_swap_indices = new_set
-        else:
+        if index not in self._selected_swap_indices:
             self._selected_swap_indices = self._selected_swap_indices | {index}
 
         if len(self._selected_swap_indices) == 2:
-            idx1, idx2 = self._selected_swap_indices
-            self.post_message(self.SwapRequest(idx1, idx2, self))
+            idx_1, idx_2 = self._selected_swap_indices
+
+            self.post_message(self.SwapRequest(idx_1, idx_2, self))
             self._selected_swap_indices = set()
