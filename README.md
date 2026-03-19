@@ -119,6 +119,13 @@ ruff check .
 ruff format --check .
 pyright
 ```
+## Gallery & Demonstration
+
+
+
+https://github.com/user-attachments/assets/cba00cc7-4200-4fc6-a02d-8feb11cd5151
+
+
 
 ## Contact
 
