@@ -132,6 +132,10 @@ ruff format --check .
 pyright
 ```
 
+## Contact
+
+Jeffery Fang - jefferyfang324@gmail.com
+
 ## Tools
 
 - [Python](https://www.python.org/) - Language
