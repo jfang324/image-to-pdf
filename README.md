@@ -1,78 +1,143 @@
-## About The Project
+# image-to-pdf
 
-A Python package that provides a script to convert images to PDF files as well as some helpful functions if you want to include that functionality in your own project.
+A Python TUI application for converting images to PDF files.
 
-## Getting Started
+## Features
 
-### Prerequisites
+- Select images from any directory via a three-panel interface
+- Reorder images before converting
+- Configurable PDF quality and optimization
+- Exportable library functions for programmatic use
 
-Before you can use this package, you need to have the following installed:
+## Requirements
 
-- Python 3.9, 3.10, or 3.11
-- Pillow 10.4.0 or higher
-- windows-curses (if you are using Windows)
+- Python 3.9, 3.10, 3.11, or 3.12
 
-To run the tests, you will also need:
+## Installation
 
-- pytest
-- coverage
+```sh
+git clone https://github.com/jfang324/image-to-pdf.git
+cd image-to-pdf
+pip install .
+```
 
-### Installation
+## Usage
 
-To install the package, run the following command in your terminal:
+Run the application:
 
-1. Clone the repository:
+```sh
+image-to-pdf
+```
 
-    ```sh
-    git clone https://github.com/jfang324/image-to-pdf.git
-    ```
+### Command-Line Options
 
-2. Navigate to the project directory:
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-q, --quality` | PDF quality 1-100 (higher = larger file) | 75 |
+| `-o, --optimize` | Optimize PDF file size | false |
 
-    ```sh
-    cd image-to-pdf
-    ```
+Example:
 
-3. Install the package:
+```sh
+image-to-pdf --quality 90 --optimize
+```
 
-    ```sh
-    pip install .
-    ```
+## Programmatic Use
 
-4. The script will now be installed in your python scripts directory where you can run it or add it to your PATH to be able to run it from anywhere.
+```python
+from image_to_pdf import convert_images_to_pdf, is_image
 
-5. To run the tests, install the development dependencies:
+# Check if a file is an image
+is_image("photo.jpg")  # True or False
 
-    ```sh
-    pip install -r requirements-dev.txt
-    ```
+# Convert images to PDF
+convert_images_to_pdf(
+    ["photo1.jpg", "photo2.png"],
+    "/output/directory",
+    "my_report",
+    quality=75,
+    optimize=False,
+)
+```
 
-6. Run the tests:
+## Development
 
-    ```sh
-    coverage run -m pytest -v
-    ```
+### Setup
 
-7. Generate a coverage report:
+Install with dev dependencies:
 
-    ```sh
-    coverage report -m
-    ```
+```sh
+poetry install --with dev
+```
 
-## Gallery & Demonstrations
+### Pre-commit Hooks
 
-https://github.com/user-attachments/assets/971eba23-0fa4-4b72-8f21-49f61cb52f5f
+Install pre-commit to run linting and type-checking on every commit:
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+### Textual Dev Tools
+
+The `textual` CLI is installed as part of the dev dependencies. Run it with:
+
+```sh
+poetry run textual --help
+```
+
+To run the app with live-reload and the dev console:
+
+```sh
+poetry run textual run --dev image_to_pdf.app:ImageToPDFApp
+```
+
+To pass CLI arguments, use `--` to separate Textual flags from app flags:
+
+```sh
+poetry run textual run --dev image_to_pdf.app:ImageToPDFApp -- --quality 90 --optimize
+```
+
+### Running Tests
+
+```sh
+pytest
+```
+
+With coverage:
+
+```sh
+coverage run -m pytest
+coverage report -m
+```
+
+### Linting and Type-Checking
+
+```sh
+ruff check .
+ruff format --check .
+pyright
+```
+## Gallery & Demonstration
+
+
+
+https://github.com/user-attachments/assets/cba00cc7-4200-4fc6-a02d-8feb11cd5151
+
+
 
 ## Contact
 
 Jeffery Fang - jefferyfang324@gmail.com
 
-## Tools & Technologies
+## Tools
 
-- Python
-- Pillow
-- pytest
-- coverage
-- Poetry
-- Curses/Windows-Curses
-- Pyright
+- [Python](https://www.python.org/) - Language
+- [Pillow](https://pillow.readthedocs.io/) - Image processing
+- [Textual](https://textual.textualize.io/) - TUI framework
+- [Poetry](https://python-poetry.org/) - Dependency management
+- [Ruff](https://docs.astral.sh/ruff/) - Linting and formatting
+- [Pyright](https://github.com/microsoft/pyright) - Static type checking
+- [pytest](https://docs.pytest.org/) - Testing
+- [coverage](https://coverage.readthedocs.io/) - Code coverage

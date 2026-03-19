@@ -1,4 +1,3 @@
-import imghdr
 import os
 from io import BytesIO
 
@@ -13,58 +12,39 @@ def is_image(file_path: str) -> bool:
     :return: True if the file is an image, False otherwise
     """
 
-    return (
-        os.path.exists(file_path)
-        and os.path.isfile(file_path)
-        and imghdr.what(file_path) is not None
-    )
-
-
-def get_image_list(dir_path: str) -> list[str]:
-    """
-    Get a list of image files in a directory
-
-    :param dir_path: The path to the directory
-    :return: A list of all images in the directory
-    :raises FileNotFoundError: If the directory does not exist
-    :raises NotADirectoryError: If the path is not a directory
-    :raises PermissionError: If the directory cannot be accessed
-    """
-
-    if not os.path.exists(dir_path):
-        raise FileNotFoundError(f"The directory {dir_path} does not exist")
-
-    if not os.path.isdir(dir_path):
-        raise NotADirectoryError(f"{dir_path} is not a directory")
-
-    try:
-        path_list: list[str] = os.listdir(dir_path)
-    except PermissionError:
-        raise PermissionError(f"Permission denied to access directory: {dir_path}")
-
-    image_list: list[str] = []
-
-    for path in path_list:
-        full_path: str = os.path.join(dir_path, path)
-
-        if is_image(full_path):
-            image_list.append(full_path)
-
-    return image_list
-
-
-def validate_directory(dir_path: str) -> bool:
-    """
-    Validates if a path is a valid directory
-
-    :param dir_path: The path to be validated
-    :return: True if the path is a valid directory, False otherwise
-    """
-
-    if os.path.exists(dir_path) and os.path.isdir(dir_path):
-        return True
-    else:
+    if not os.path.isfile(file_path):
         return False
+    try:
+        with Image.open(file_path) as img:
+            img.verify()
+        return True
+    except Exception:
+        return False
+
+
+def scan_directory(
+    directory: str, current_selected_files: list[str]
+) -> list[tuple[str, str, bool]]:
+    """
+    Scan a directory for image files.
+
+    :param directory: The directory path to scan
+    :param current_selected_files: List of currently selected file paths
+    :return: List of (filename, full_path, is_selected) tuples for each image
+    """
+    contents = os.listdir(directory)
+    selected_set = set(current_selected_files)
+    results = []
+
+    for path in contents:
+        if path.startswith("."):
+            continue
+        full_path = os.path.join(directory, path)
+        if not is_image(full_path):
+            continue
+        results.append((path, full_path, full_path in selected_set))
+
+    return results
 
 
 def convert_images_to_pdf(
@@ -82,7 +62,7 @@ def convert_images_to_pdf(
     :param output_name: The name of the output PDF file
     :param quality: PDF quality (1-100, default: 75)
     :param optimize: Whether to optimize PDF file size (default: False)
-    :raises ValueError: If image_list is empty, output_path is invalid, or output_name is empty
+    :raises ValueError: If image_list is empty, output_path is invalid, output_name is empty, or none of the files could be converted
     """
 
     if not image_list:
@@ -98,14 +78,17 @@ def convert_images_to_pdf(
 
     for image in image_list:
         if is_image(image):
-            img: Image.Image = Image.open(image)
-            if img.mode in ("RGBA", "P"):
-                img = img.convert("RGB")
+            with Image.open(image) as img:
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGB")
 
-            buffer = BytesIO()
-            img.save(buffer, format="PNG")
-            buffer.seek(0)
-            images.append(Image.open(buffer))
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                buffer.seek(0)
+                images.append(Image.open(buffer))
+
+    if not images:
+        raise ValueError("None of the selected files could be converted to images")
 
     if images and os.path.exists(output_path):
         images[0].save(

@@ -1,14 +1,6 @@
 {
-  "include": ["src"],
-  "exclude": ["tests"],
-  "typeCheckingMode": "standard",
-  "pythonVersion": "3.9",
-  "reportMissingTypeStubs": false,
-  "reportUnknownMemberType": false,
-  "reportAttributeAccessIssue": false,
-  "reportGeneralTypeIssues": false,
-  "reportArgumentType": false,
-  "reportReturnType": false,
-  "reportAssignmentType": false,
-  "reportOperatorIssue": false
+    "include": ["src", "tests"],
+    "exclude": ["**/__pycache__", "**/.*"],
+    "typeCheckingMode": "basic",
+    "pythonVersion": "3.9"
 }
