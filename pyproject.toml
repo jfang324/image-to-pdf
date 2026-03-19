@@ -19,7 +19,7 @@ pytest = "^8.3.3"
 coverage = "^7.6.1"
 pyright = "^1.1.389"
 ruff = "^0.8.0"
-textual-dev = "^1.8.0"
+textual = { extras = ["dev"], version = "^8.1.1" }
 
 [tool.poetry.group.windows]
 optional = true

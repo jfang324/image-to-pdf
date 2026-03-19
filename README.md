@@ -91,6 +91,28 @@ pip install pre-commit
 pre-commit install
 ```
 
+### Textual Dev Tools
+
+The `textual` CLI is installed as part of the dev dependencies. Run it with:
+
+```sh
+poetry run textual --help
+```
+
+To run the app with live-reload and the dev console:
+
+```sh
+poetry run textual run --dev -m image_to_pdf.app
+```
+
+Note: Poetry 2.0 removed `poetry shell`. To activate the virtual environment in your shell:
+
+```sh
+eval "$(poetry env activate)"
+```
+
+Or run commands directly with `poetry run`.
+
 ### Running Tests
 
 ```sh
