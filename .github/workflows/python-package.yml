@@ -21,9 +21,9 @@ jobs:
                   pip install poetry
                   poetry install --with dev
             - name: Lint with ruff
-              run: ruff check .
+              run: poetry run ruff check .
             - name: Type check with pyright
-              run: pyright
+              run: poetry run pyright
 
     test:
         runs-on: ubuntu-latest
@@ -43,8 +43,8 @@ jobs:
                   pip install poetry
                   poetry install --with dev
             - name: Check for vulnerabilities
-              run: pip-audit --strict || true
+              run: poetry run pip-audit --strict || true
             - name: Test with pytest & coverage
               run: |
-                  coverage run --branch --source=src -m pytest
-                  coverage report -m
+                  poetry run coverage run --branch --source=src -m pytest
+                  poetry run coverage report -m
