@@ -15,23 +15,11 @@ A Python TUI application for converting images to PDF files.
 
 ## Installation
 
-### With pip
-
 ```sh
 git clone https://github.com/jfang324/image-to-pdf.git
 cd image-to-pdf
 pip install .
 ```
-
-### With Poetry
-
-```sh
-git clone https://github.com/jfang324/image-to-pdf.git
-cd image-to-pdf
-poetry install
-```
-
-This will install the package in editable mode with all dependencies.
 
 ## Usage
 
