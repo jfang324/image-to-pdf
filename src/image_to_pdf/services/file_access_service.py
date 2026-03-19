@@ -22,6 +22,31 @@ def is_image(file_path: str) -> bool:
         return False
 
 
+def scan_directory(
+    directory: str, current_selected_files: list[str]
+) -> list[tuple[str, str, bool]]:
+    """
+    Scan a directory for image files.
+
+    :param directory: The directory path to scan
+    :param current_selected_files: List of currently selected file paths
+    :return: List of (filename, full_path, is_selected) tuples for each image
+    """
+    contents = os.listdir(directory)
+    selected_set = set(current_selected_files)
+    results = []
+
+    for path in contents:
+        if path.startswith("."):
+            continue
+        full_path = os.path.join(directory, path)
+        if not is_image(full_path):
+            continue
+        results.append((path, full_path, full_path in selected_set))
+
+    return results
+
+
 def convert_images_to_pdf(
     image_list: list[str],
     output_path: str,

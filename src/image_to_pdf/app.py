@@ -9,7 +9,7 @@ from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.widgets import Footer
 
-from .services.file_access_service import convert_images_to_pdf, is_image
+from .services.file_access_service import convert_images_to_pdf, scan_directory
 from .widgets.directory_explorer import DirectoryExplorer
 from .widgets.file_organizer import FileOrganizer
 from .widgets.file_selector import FileSelector
@@ -116,21 +116,7 @@ class ImageToPDFApp(App):
     def scan_directory(self, directory: str) -> list[tuple[str, str, bool]]:
         """Scan the input directory and return a list of (name, path, selected)"""
         try:
-            directory_contents = os.listdir(directory)
-            current_selected_files_set = set(self.current_selected_files)
-            results = []
-
-            for path in directory_contents:
-                if path.startswith("."):
-                    continue
-
-                full_path = os.path.join(directory, path)
-                if not is_image(full_path):
-                    continue
-
-                results.append((path, full_path, full_path in current_selected_files_set))
-
-            return results
+            return scan_directory(directory, self.current_selected_files)
         except OSError as e:
             self.notify(message=f"Failed to scan directory: {e}", severity="error")
             return []
