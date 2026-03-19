@@ -37,7 +37,7 @@ def convert_images_to_pdf(
     :param output_name: The name of the output PDF file
     :param quality: PDF quality (1-100, default: 75)
     :param optimize: Whether to optimize PDF file size (default: False)
-    :raises ValueError: If image_list is empty, output_path is invalid, or output_name is empty
+    :raises ValueError: If image_list is empty, output_path is invalid, output_name is empty, or none of the files could be converted
     """
 
     if not image_list:
@@ -61,6 +61,9 @@ def convert_images_to_pdf(
                 img.save(buffer, format="PNG")
                 buffer.seek(0)
                 images.append(Image.open(buffer))
+
+    if not images:
+        raise ValueError("None of the selected files could be converted to images")
 
     if images and os.path.exists(output_path):
         images[0].save(

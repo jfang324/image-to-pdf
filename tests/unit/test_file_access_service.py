@@ -60,12 +60,24 @@ class TestConvertImagesToPdf:
         with pytest.raises(ValueError, match="output_name cannot be empty"):
             convert_images_to_pdf([str(img_path)], str(tmp_path), "   ")
 
+    def test_convert_images_to_pdf_raises_when_all_files_invalid(self, tmp_path: Path) -> None:
+        txt_path = tmp_path / "not_an_image.txt"
+        txt_path.write_text("not an image")
+        output_path = tmp_path / "output"
+        output_path.mkdir()
+        with pytest.raises(ValueError, match="None of the selected files"):
+            convert_images_to_pdf([str(txt_path)], str(output_path), "output")
+
     def test_convert_images_to_pdf_skips_nonexistent_images(self, tmp_path: Path) -> None:
+        valid_path = tmp_path / "valid.jpg"
+        Image.new("RGB", (10, 10)).save(valid_path, format="JPEG")
         output_path = tmp_path / "output"
         output_path.mkdir()
         pdf_path = output_path / "output.pdf"
-        convert_images_to_pdf(["/nonexistent/image.jpg"], str(output_path), "output")
-        assert not pdf_path.exists()
+        convert_images_to_pdf(
+            ["/nonexistent/image.jpg", str(valid_path)], str(output_path), "output"
+        )
+        assert pdf_path.exists()
 
     def test_convert_images_to_pdf_creates_valid_pdf(self, tmp_path: Path) -> None:
         img1_path = tmp_path / "image1.jpg"
