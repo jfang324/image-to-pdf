@@ -1,78 +1,124 @@
-## About The Project
+# image-to-pdf
 
-A Python package that provides a script to convert images to PDF files as well as some helpful functions if you want to include that functionality in your own project.
+A Python TUI application for converting images to PDF files.
 
-## Getting Started
+## Features
 
-### Prerequisites
+- Select images from any directory via a three-panel interface
+- Reorder images before converting
+- Configurable PDF quality and optimization
+- Exportable library functions for programmatic use
 
-Before you can use this package, you need to have the following installed:
+## Requirements
 
-- Python 3.9, 3.10, or 3.11
-- Pillow 10.4.0 or higher
-- windows-curses (if you are using Windows)
+- Python 3.9, 3.10, 3.11, or 3.12
 
-To run the tests, you will also need:
+## Installation
 
-- pytest
-- coverage
+```sh
+git clone https://github.com/jfang324/image-to-pdf.git
+cd image-to-pdf
+pip install .
+```
 
-### Installation
+On Windows, curses is required:
 
-To install the package, run the following command in your terminal:
+```sh
+pip install windows-curses
+```
 
-1. Clone the repository:
+Or install with Poetry for automatic Windows curses handling:
 
-    ```sh
-    git clone https://github.com/jfang324/image-to-pdf.git
-    ```
+```sh
+poetry install --with windows
+```
 
-2. Navigate to the project directory:
+## Usage
 
-    ```sh
-    cd image-to-pdf
-    ```
+Run the application:
 
-3. Install the package:
+```sh
+image-to-pdf
+```
 
-    ```sh
-    pip install .
-    ```
+### Command-Line Options
 
-4. The script will now be installed in your python scripts directory where you can run it or add it to your PATH to be able to run it from anywhere.
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-q, --quality` | PDF quality 1-100 (higher = larger file) | 75 |
+| `-o, --optimize` | Optimize PDF file size | false |
 
-5. To run the tests, install the development dependencies:
+Example:
 
-    ```sh
-    pip install -r requirements-dev.txt
-    ```
+```sh
+image-to-pdf --quality 90 --optimize
+```
 
-6. Run the tests:
+## Programmatic Use
 
-    ```sh
-    coverage run -m pytest -v
-    ```
+```python
+from image_to_pdf import convert_images_to_pdf, is_image
 
-7. Generate a coverage report:
+# Check if a file is an image
+is_image("photo.jpg")  # True or False
 
-    ```sh
-    coverage report -m
-    ```
+# Convert images to PDF
+convert_images_to_pdf(
+    ["photo1.jpg", "photo2.png"],
+    "/output/directory",
+    "my_report",
+    quality=75,
+    optimize=False,
+)
+```
 
-## Gallery & Demonstrations
+## Development
 
-https://github.com/user-attachments/assets/971eba23-0fa4-4b72-8f21-49f61cb52f5f
+### Setup
 
-## Contact
+Install with dev dependencies:
 
-Jeffery Fang - jefferyfang324@gmail.com
+```sh
+poetry install --with dev
+```
 
-## Tools & Technologies
+### Pre-commit Hooks
 
-- Python
-- Pillow
-- pytest
-- coverage
-- Poetry
-- Curses/Windows-Curses
-- Pyright
+Install pre-commit to run linting and type-checking on every commit:
+
+```sh
+pip install pre-commit
+pre-commit install
+```
+
+### Running Tests
+
+```sh
+pytest
+```
+
+With coverage:
+
+```sh
+coverage run -m pytest
+coverage report -m
+```
+
+### Linting and Type-Checking
+
+```sh
+ruff check .
+ruff format --check .
+pyright
+```
+
+## Tools
+
+- [Python](https://www.python.org/) - Language
+- [Pillow](https://pillow.readthedocs.io/) - Image processing
+- [Textual](https://textual.textualize.io/) - TUI framework
+- [Poetry](https://python-poetry.org/) - Dependency management
+- [Ruff](https://docs.astral.sh/ruff/) - Linting and formatting
+- [Pyright](https://github.com/microsoft/pyright) - Static type checking
+- [pytest](https://docs.pytest.org/) - Testing
+- [coverage](https://coverage.readthedocs.io/) - Code coverage
