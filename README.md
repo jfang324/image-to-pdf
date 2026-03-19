@@ -111,14 +111,6 @@ To pass CLI arguments, use `--` to separate Textual flags from app flags:
 poetry run textual run --dev image_to_pdf.app:ImageToPDFApp -- --quality 90 --optimize
 ```
 
-Note: Poetry 2.0 removed `poetry shell`. To activate the virtual environment in your shell:
-
-```sh
-eval "$(poetry env activate)"
-```
-
-Or run commands directly with `poetry run`.
-
 ### Running Tests
 
 ```sh
