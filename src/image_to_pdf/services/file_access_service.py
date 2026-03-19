@@ -13,11 +13,14 @@ def is_image(file_path: str) -> bool:
     :return: True if the file is an image, False otherwise
     """
 
-    return (
-        os.path.exists(file_path)
-        and os.path.isfile(file_path)
-        and imghdr.what(file_path) is not None
-    )
+    if not os.path.isfile(file_path):
+        return False
+    try:
+        with Image.open(file_path) as img:
+            img.verify()
+        return True
+    except Exception:
+        return False
 
 
 def convert_images_to_pdf(

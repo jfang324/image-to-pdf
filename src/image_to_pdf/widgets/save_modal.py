@@ -3,9 +3,10 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, Label
 from textual.containers import Vertical
 from textual.reactive import reactive
+from typing import Union
 
 
-class SaveModal(ModalScreen[str | None]):
+class SaveModal(ModalScreen[Union[str, None]]):
     """A modal form that prompts users for a save name"""
 
     DEFAULT_CSS = """
@@ -47,7 +48,7 @@ class SaveModal(ModalScreen[str | None]):
             yield Label("Enter a file name:", id="subtitle")
             yield Input(placeholder="e.g. class_final_report", id="input")
 
-    def on_input_submitted(self, event: Input.Submitted) -> str | None:
+    def on_input_submitted(self, event: Input.Submitted) -> None:
         self.dismiss(event.value)
 
     def action_cancel_request(self) -> None:

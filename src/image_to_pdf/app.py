@@ -12,6 +12,7 @@ from .services.file_access_service import is_image, convert_images_to_pdf
 from textual import work
 import time
 from dataclasses import dataclass
+from typing import Union
 
 
 @dataclass
@@ -37,7 +38,7 @@ class ImageToPDFApp(App):
 
     input_directory = reactive("")
     output_directory = reactive("")
-    input_directory_files: reactive[list[str]] = reactive([])
+    input_directory_files: reactive[list[tuple[str, str, bool]]] = reactive([])
     current_selected_files: reactive[list[str]] = reactive([])
 
     def __init__(self, quality: int = 75, optimize: bool = False) -> None:
@@ -71,7 +72,7 @@ class ImageToPDFApp(App):
     @work(thread=True)
     def _handle_save_request(self, output_file_name: str = "output") -> None:
         try:
-            start_time = time.time()
+            start_time = time.perf_counter_ns()
 
             convert_images_to_pdf(
                 self.current_selected_files,
@@ -81,20 +82,22 @@ class ImageToPDFApp(App):
                 optimize=self.config.optimize,
             )
 
-            elapsed_time = time.time() - start_time
+            elapsed_time = (time.perf_counter_ns() - start_time) / (10**9)
 
             self.call_from_thread(
                 self.notify,
                 f"{output_file_name}.pdf saved to {self.output_directory} ({elapsed_time:.2f}s)",
             )
-        except Exception as e:
-            self.call_from_thread(self.notify, f"Something went wrong")
-            self.log(e)
+        except (OSError, ValueError) as e:
+            self.call_from_thread(
+                self.notify, message=f"Failed to save PDF: {e}", severity="error"
+            )
+            self.log.error("PDF conversion failed", exception=e)
 
     def action_request_save(self) -> None:
         self.push_screen(SaveModal(), self._on_save_modal_close)
 
-    def _on_save_modal_close(self, output_file_name: str | None) -> None:
+    def _on_save_modal_close(self, output_file_name: Union[str, None]) -> None:
         if output_file_name is None:
             return
 
@@ -111,19 +114,24 @@ class ImageToPDFApp(App):
         """Scan the input directory and return a list of (name, path, selected)"""
         try:
             directory_contents = os.listdir(directory)
-            current_selected_files = set(self.current_selected_files)
+            current_selected_files_set = set(self.current_selected_files)
+            results = []
 
-            return [
-                (
-                    path,
-                    os.path.join(directory, path),
-                    os.path.join(directory, path) in current_selected_files,
+            for path in directory_contents:
+                if path.startswith("."):
+                    continue
+
+                full_path = os.path.join(directory, path)
+                if not is_image(full_path):
+                    continue
+
+                results.append(
+                    (path, full_path, full_path in current_selected_files_set)
                 )
-                for path in directory_contents
-                if not path.startswith(".") and is_image(os.path.join(directory, path))
-            ]
+
+            return results
         except OSError:
-            self.notify("Failed to scan directory")
+            self.notify(message="Failed to scan directory", severity="error")
             return []
 
     def watch_input_directory(self) -> None:
