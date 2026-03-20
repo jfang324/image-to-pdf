@@ -11,7 +11,7 @@ A Python TUI application for converting images to PDF files.
 
 ## Requirements
 
-- Python 3.9, 3.10, 3.11, or 3.12
+- Python 3.10, 3.11, or 3.12
 
 ## Installation
 
@@ -31,10 +31,10 @@ image-to-pdf
 
 ### Command-Line Options
 
-| Flag | Description | Default |
-|------|-------------|---------|
-| `-q, --quality` | PDF quality 1-100 (higher = larger file) | 75 |
-| `-o, --optimize` | Optimize PDF file size | false |
+| Flag             | Description                              | Default |
+| ---------------- | ---------------------------------------- | ------- |
+| `-q, --quality`  | PDF quality 1-100 (higher = larger file) | 75      |
+| `-o, --optimize` | Optimize PDF file size                   | false   |
 
 Example:
 
@@ -119,13 +119,10 @@ ruff check .
 ruff format --check .
 pyright
 ```
+
 ## Gallery & Demonstration
 
-
-
 https://github.com/user-attachments/assets/cba00cc7-4200-4fc6-a02d-8feb11cd5151
-
-
 
 ## Contact
 

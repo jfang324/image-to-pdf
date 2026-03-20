@@ -99,7 +99,7 @@ class FileOrganizer(Widget):
             self._selected_swap_indices = self._selected_swap_indices | {index}
 
         if len(self._selected_swap_indices) == 2:
-            idx_1, idx_2 = self._selected_swap_indices
+            index_1, index_2 = self._selected_swap_indices
 
-            self.post_message(self.SwapRequest(idx_1, idx_2, self))
+            self.post_message(self.SwapRequest(index_1, index_2, self))
             self._selected_swap_indices = set()
