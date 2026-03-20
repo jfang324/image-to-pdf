@@ -74,6 +74,11 @@ def convert_images_to_pdf(
     if not output_name or not output_name.strip():
         raise ValueError("output_name cannot be empty")
 
+    full_output_path = f"{os.path.join(output_path, output_name)}.pdf"
+
+    if os.path.exists(full_output_path):
+        raise ValueError(f"{output_name}.pdf already exists in {output_path}")
+
     images: list[Image.Image] = []
 
     for image in image_list:
@@ -92,7 +97,7 @@ def convert_images_to_pdf(
 
     if images and os.path.exists(output_path):
         images[0].save(
-            f"{os.path.join(output_path, output_name)}.pdf",
+            full_output_path,
             quality=quality,
             optimize=optimize,
             save_all=True,

@@ -60,6 +60,17 @@ class TestConvertImagesToPdf:
         with pytest.raises(ValueError, match="output_name cannot be empty"):
             convert_images_to_pdf([str(img_path)], str(tmp_path), "   ")
 
+    def test_convert_images_to_pdf_raises_on_name_collision(self, tmp_path: Path) -> None:
+        existing_file = "report"
+        full_path = tmp_path / f"{existing_file}.pdf"
+        full_path.touch()
+
+        img_path = tmp_path / "image.jpg"
+        Image.new("RGB", (10, 10)).save(img_path, format="JPEG")
+
+        with pytest.raises(ValueError, match="already exists"):
+            convert_images_to_pdf([str(img_path)], str(tmp_path), existing_file)
+
     def test_convert_images_to_pdf_raises_when_all_files_invalid(self, tmp_path: Path) -> None:
         txt_path = tmp_path / "not_an_image.txt"
         txt_path.write_text("not an image")
