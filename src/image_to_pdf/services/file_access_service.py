@@ -85,6 +85,7 @@ def convert_images_to_pdf(
     try:
         for image in image_list:
             if is_image(image):
+                # Normalize the image by converting it to RGB and to PNG format for lossless embedding
                 with Image.open(image) as img:
                     if img.mode in ("RGBA", "P"):
                         img = img.convert("RGB")

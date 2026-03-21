@@ -60,7 +60,7 @@ class FileOrganizer(Widget):
             self.index_2 = index_2
             self._control = control
 
-    def __init__(self, title: str = "File Organizer", **kwargs):
+    def __init__(self, title: str = "File Organizer", **kwargs) -> None:
         super().__init__(**kwargs)
         self.border_title = title
 
