@@ -13,7 +13,7 @@ def quality_range(string: str) -> int:
     return value
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Convert images to PDF")
 
     parser.add_argument(
