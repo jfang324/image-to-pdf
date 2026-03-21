@@ -3,12 +3,23 @@ import argparse
 from .app import ImageToPDFApp
 
 
+def quality_range(string: str) -> int:
+    try:
+        value = int(string)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{string}' is not a valid integer")
+    if not 1 <= value <= 100:
+        raise argparse.ArgumentTypeError(f"quality must be 1-100, got {value}")
+    return value
+
+
 def main():
     parser = argparse.ArgumentParser(description="Convert images to PDF")
+
     parser.add_argument(
         "-q",
         "--quality",
-        type=int,
+        type=quality_range,
         default=75,
         help="PDF quality (1-100, default: 75)",
     )
@@ -16,7 +27,6 @@ def main():
         "-o",
         "--optimize",
         action="store_true",
-        default=False,
         help="Optimize PDF file size",
     )
     args = parser.parse_args()

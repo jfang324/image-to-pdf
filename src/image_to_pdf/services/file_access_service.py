@@ -95,11 +95,10 @@ def convert_images_to_pdf(
     if not images:
         raise ValueError("None of the selected files could be converted to images")
 
-    if images and os.path.exists(output_path):
-        images[0].save(
-            full_output_path,
-            quality=quality,
-            optimize=optimize,
-            save_all=True,
-            append_images=images[1:],
-        )
+    images[0].save(
+        full_output_path,
+        quality=quality,
+        optimize=optimize,
+        save_all=True,
+        append_images=images[1:],
+    )

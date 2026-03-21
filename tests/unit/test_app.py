@@ -17,7 +17,7 @@ class TestScanDirectory:
             return_value=True,
         ):
             result = scan_directory(str(tmp_path), [])
-        assert result == [("photo.jpg", str(img_path), False)]
+            assert result == [("photo.jpg", str(img_path), False)]
 
     def test_filters_hidden_files(self, tmp_path: Path) -> None:
         hidden = tmp_path / ".hidden.png"
@@ -29,9 +29,9 @@ class TestScanDirectory:
             return_value=True,
         ):
             result = scan_directory(str(tmp_path), [])
-        names = [name for name, _, _ in result]
-        assert ".hidden.png" not in names
-        assert "visible.jpg" in names
+            names = [name for name, _, _ in result]
+            assert ".hidden.png" not in names
+            assert "visible.jpg" in names
 
     def test_filters_non_images(self, tmp_path: Path) -> None:
         jpg = tmp_path / "photo.jpg"
@@ -47,9 +47,9 @@ class TestScanDirectory:
             side_effect=fake_is_image,
         ):
             result = scan_directory(str(tmp_path), [])
-        names = [name for name, _, _ in result]
-        assert "photo.jpg" in names
-        assert "readme.txt" not in names
+            names = [name for name, _, _ in result]
+            assert "photo.jpg" in names
+            assert "readme.txt" not in names
 
     def test_marks_selected_files(self, tmp_path: Path) -> None:
         img_path = tmp_path / "photo.jpg"
@@ -59,7 +59,7 @@ class TestScanDirectory:
             return_value=True,
         ):
             result = scan_directory(str(tmp_path), [str(img_path)])
-        assert result == [("photo.jpg", str(img_path), True)]
+            assert result == [("photo.jpg", str(img_path), True)]
 
     def test_raises_on_oserror(self, tmp_path: Path) -> None:
         with patch(
@@ -91,7 +91,11 @@ class TestOnImageSelectorSelectionChanged:
         mock_event.deselected_files = []
 
         app.on_image_selector_selection_changed(mock_event)
-        assert app.current_selected_files == ["/path/a.jpg", "/path/b.jpg", "/path/c.jpg"]
+        assert app.current_selected_files == [
+            "/path/a.jpg",
+            "/path/b.jpg",
+            "/path/c.jpg",
+        ]
 
     def test_reselecting_deselected_file_readds_it(self) -> None:
         app = ImageToPDFApp()
@@ -126,7 +130,11 @@ class TestOnFileOrganizerSwap:
         mock_event.index_2 = 2
 
         app.on_file_organizer_swap(mock_event)
-        assert app.current_selected_files == ["/path/c.jpg", "/path/b.jpg", "/path/a.jpg"]
+        assert app.current_selected_files == [
+            "/path/c.jpg",
+            "/path/b.jpg",
+            "/path/a.jpg",
+        ]
 
     def test_swap_same_index_noops(self) -> None:
         app = ImageToPDFApp()
@@ -149,8 +157,8 @@ class TestOnSaveModalClose:
             patch.object(app, "_handle_save_request") as mock_save,
         ):
             app._on_save_modal_close(None)
-        mock_notify.assert_not_called()
-        mock_save.assert_not_called()
+            mock_notify.assert_not_called()
+            mock_save.assert_not_called()
 
     def test_notify_error_on_empty_selection(self) -> None:
         app = ImageToPDFApp()
@@ -160,9 +168,9 @@ class TestOnSaveModalClose:
             patch.object(app, "_handle_save_request") as mock_save,
         ):
             app._on_save_modal_close("output")
-        mock_notify.assert_called_once()
-        assert "No files selected" in mock_notify.call_args[0][0]
-        mock_save.assert_not_called()
+            mock_notify.assert_called_once()
+            assert "No files selected" in mock_notify.call_args[0][0]
+            mock_save.assert_not_called()
 
     def test_calls_handle_save_request_and_notify_on_valid(self) -> None:
         app = ImageToPDFApp()
@@ -172,9 +180,15 @@ class TestOnSaveModalClose:
             patch.object(app, "_handle_save_request") as mock_save,
         ):
             app._on_save_modal_close("my_report")
-        mock_save.assert_called_once_with("my_report")
-        mock_notify.assert_called_once()
-        assert "Job started" in mock_notify.call_args[0][0]
+            mock_save.assert_called_once_with(
+                ["/path/a.jpg"],
+                "",
+                "my_report",
+                app.config.quality,
+                app.config.optimize,
+            )
+            mock_notify.assert_called_once()
+            assert "Job started" in mock_notify.call_args[0][0]
 
 
 class TestIntegration:
@@ -186,14 +200,24 @@ class TestIntegration:
         output_dir.mkdir()
 
         app = ImageToPDFApp()
-        async with app.run_test() as pilot:
-            app.output_directory = str(output_dir)
-            app.current_selected_files = [str(img_path)]
+        with patch("src.image_to_pdf.app.convert_images_to_pdf") as mock_convert:
+            async with app.run_test():
+                app.output_directory = str(output_dir)
+                app.current_selected_files = [str(img_path)]
 
-            app._handle_save_request("report")
+                worker = app._handle_save_request(
+                    [str(img_path)],
+                    str(output_dir),
+                    "report",
+                    app.config.quality,
+                    app.config.optimize,
+                )
+                await worker.wait()
 
-            await pilot.pause(1.0)
-
-        pdf_path = output_dir / "report.pdf"
-        assert pdf_path.exists()
-        assert pdf_path.stat().st_size > 0
+                mock_convert.assert_called_once_with(
+                    [str(img_path)],
+                    str(output_dir),
+                    "report",
+                    app.config.quality,
+                    app.config.optimize,
+                )
