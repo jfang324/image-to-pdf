@@ -39,8 +39,8 @@ class ImageToPDFApp(App):
 
     BINDINGS = [("ctrl+s", "request_save", "Save file")]
 
-    input_directory = reactive("")
-    output_directory = reactive("")
+    input_directory: reactive[str] = reactive("")
+    output_directory: reactive[str] = reactive("")
     input_directory_files: reactive[list[tuple[str, str, bool]]] = reactive([])
     current_selected_files: reactive[list[str]] = reactive([])
 

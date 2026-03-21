@@ -80,25 +80,33 @@ def convert_images_to_pdf(
         raise ValueError(f"{output_name}.pdf already exists in {output_path}")
 
     images: list[Image.Image] = []
+    buffers: list[BytesIO] = []
 
-    for image in image_list:
-        if is_image(image):
-            with Image.open(image) as img:
-                if img.mode in ("RGBA", "P"):
-                    img = img.convert("RGB")
+    try:
+        for image in image_list:
+            if is_image(image):
+                with Image.open(image) as img:
+                    if img.mode in ("RGBA", "P"):
+                        img = img.convert("RGB")
 
-                buffer = BytesIO()
-                img.save(buffer, format="PNG")
-                buffer.seek(0)
-                images.append(Image.open(buffer))
+                    buffer = BytesIO()
+                    img.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    buffers.append(buffer)
+                    images.append(Image.open(buffer))
 
-    if not images:
-        raise ValueError("None of the selected files could be converted to images")
+        if not images:
+            raise ValueError("None of the selected files could be converted to images")
 
-    images[0].save(
-        full_output_path,
-        quality=quality,
-        optimize=optimize,
-        save_all=True,
-        append_images=images[1:],
-    )
+        images[0].save(
+            full_output_path,
+            quality=quality,
+            optimize=optimize,
+            save_all=True,
+            append_images=images[1:],
+        )
+    finally:
+        for img in images:
+            img.close()
+        for buf in buffers:
+            buf.close()

@@ -39,7 +39,7 @@ class DirectoryExplorer(Widget):
         }
     """
 
-    current_directory = reactive("")
+    current_directory: reactive[str] = reactive(".")
 
     class DirectoryChanged(Message):
         """A custom message to inform the parent the directory has been changed
