@@ -71,23 +71,30 @@ class ImageToPDFApp(App):
         yield Footer()
 
     @work(thread=True)
-    def _handle_save_request(self, output_file_name: str = "output") -> None:
+    def _handle_save_request(
+        self,
+        current_selected_files: list[str],
+        output_directory: str,
+        output_file_name: str,
+        quality: int,
+        optimize: bool,
+    ) -> None:
         try:
             start_time = time.perf_counter_ns()
 
             convert_images_to_pdf(
-                self.current_selected_files,
-                self.output_directory,
+                current_selected_files,
+                output_directory,
                 output_file_name,
-                quality=self.config.quality,
-                optimize=self.config.optimize,
+                quality,
+                optimize,
             )
 
             elapsed_time = (time.perf_counter_ns() - start_time) / (10**9)
 
             self.call_from_thread(
                 self.notify,
-                f"{output_file_name}.pdf saved to {self.output_directory} ({elapsed_time:.2f}s)",
+                f"{output_file_name}.pdf saved to {output_directory} ({elapsed_time:.2f}s)",
             )
         except (OSError, ValueError, PermissionError, FileNotFoundError) as e:
             self.call_from_thread(self.notify, message=f"Failed to save PDF: {e}", severity="error")
@@ -101,10 +108,19 @@ class ImageToPDFApp(App):
             return
 
         if not self.current_selected_files:
-            self.notify("No files selected - please select at least one image.", severity="error")
+            self.notify(
+                "No files selected - please select at least one image.",
+                severity="error",
+            )
             return
 
-        self._handle_save_request(output_file_name)
+        self._handle_save_request(
+            self.current_selected_files,
+            self.output_directory,
+            output_file_name,
+            self.config.quality,
+            self.config.optimize,
+        )
         self.notify("Job started, you will be notified on completion")
 
     def on_mount(self) -> None:

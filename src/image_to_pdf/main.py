@@ -16,7 +16,6 @@ def main():
         "-o",
         "--optimize",
         action="store_true",
-        default=False,
         help="Optimize PDF file size",
     )
     args = parser.parse_args()
