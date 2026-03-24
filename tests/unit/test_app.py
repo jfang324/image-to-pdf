@@ -12,6 +12,7 @@ class TestScanDirectory:
     def test_returns_named_tuple_of_name_path_selected(self, tmp_path: Path) -> None:
         img_path = tmp_path / "photo.jpg"
         img_path.touch()
+
         with patch(
             "src.image_to_pdf.services.file_access_service.is_image",
             return_value=True,
@@ -24,6 +25,7 @@ class TestScanDirectory:
         hidden.touch()
         visible = tmp_path / "visible.jpg"
         visible.touch()
+
         with patch(
             "src.image_to_pdf.services.file_access_service.is_image",
             return_value=True,
@@ -54,6 +56,7 @@ class TestScanDirectory:
     def test_marks_selected_files(self, tmp_path: Path) -> None:
         img_path = tmp_path / "photo.jpg"
         img_path.touch()
+
         with patch(
             "src.image_to_pdf.services.file_access_service.is_image",
             return_value=True,
@@ -79,7 +82,7 @@ class TestOnImageSelectorSelectionChanged:
         mock_event.selected_files = []
         mock_event.deselected_files = ["/path/b.jpg"]
 
-        app.on_image_selector_selection_changed(mock_event)
+        app._updated_current_selected_files(mock_event)
         assert app.current_selected_files == ["/path/a.jpg", "/path/c.jpg"]
 
     def test_appends_newly_selected_files(self) -> None:
@@ -90,7 +93,7 @@ class TestOnImageSelectorSelectionChanged:
         mock_event.selected_files = ["/path/b.jpg", "/path/c.jpg"]
         mock_event.deselected_files = []
 
-        app.on_image_selector_selection_changed(mock_event)
+        app._updated_current_selected_files(mock_event)
         assert app.current_selected_files == [
             "/path/a.jpg",
             "/path/b.jpg",
@@ -105,7 +108,7 @@ class TestOnImageSelectorSelectionChanged:
         mock_event.selected_files = ["/path/a.jpg", "/path/b.jpg"]
         mock_event.deselected_files = ["/path/a.jpg"]
 
-        app.on_image_selector_selection_changed(mock_event)
+        app._updated_current_selected_files(mock_event)
         assert app.current_selected_files == ["/path/b.jpg", "/path/a.jpg"]
 
     def test_no_duplicates_when_reselecting(self) -> None:
@@ -116,7 +119,7 @@ class TestOnImageSelectorSelectionChanged:
         mock_event.selected_files = ["/path/a.jpg"]
         mock_event.deselected_files = []
 
-        app.on_image_selector_selection_changed(mock_event)
+        app._updated_current_selected_files(mock_event)
         assert app.current_selected_files == ["/path/a.jpg"]
 
 
@@ -129,7 +132,7 @@ class TestOnFileOrganizerSwap:
         mock_event.index_1 = 0
         mock_event.index_2 = 2
 
-        app.on_file_organizer_swap(mock_event)
+        app._handle_file_reorder(mock_event)
         assert app.current_selected_files == [
             "/path/c.jpg",
             "/path/b.jpg",
@@ -144,7 +147,7 @@ class TestOnFileOrganizerSwap:
         mock_event.index_1 = 1
         mock_event.index_2 = 1
 
-        app.on_file_organizer_swap(mock_event)
+        app._handle_file_reorder(mock_event)
         assert app.current_selected_files == ["/path/a.jpg", "/path/b.jpg"]
 
 
@@ -152,6 +155,7 @@ class TestOnSaveModalClose:
     def test_returns_early_on_none(self) -> None:
         app = ImageToPDFApp()
         app.current_selected_files = ["/path/a.jpg"]
+
         with (
             patch.object(app, "notify") as mock_notify,
             patch.object(app, "_handle_save_request") as mock_save,
@@ -163,6 +167,7 @@ class TestOnSaveModalClose:
     def test_notify_error_on_empty_selection(self) -> None:
         app = ImageToPDFApp()
         app.current_selected_files = []
+
         with (
             patch.object(app, "notify") as mock_notify,
             patch.object(app, "_handle_save_request") as mock_save,
@@ -175,6 +180,8 @@ class TestOnSaveModalClose:
     def test_calls_handle_save_request_and_notify_on_valid(self) -> None:
         app = ImageToPDFApp()
         app.current_selected_files = ["/path/a.jpg"]
+        app.output_directory = "/tmp"
+
         with (
             patch.object(app, "notify") as mock_notify,
             patch.object(app, "_handle_save_request") as mock_save,
@@ -182,7 +189,7 @@ class TestOnSaveModalClose:
             app._on_save_modal_close("my_report")
             mock_save.assert_called_once_with(
                 ["/path/a.jpg"],
-                "",
+                "/tmp",
                 "my_report",
                 app.config.quality,
                 app.config.optimize,
@@ -200,6 +207,7 @@ class TestIntegration:
         output_dir.mkdir()
 
         app = ImageToPDFApp()
+
         with patch("src.image_to_pdf.app.convert_images_to_pdf") as mock_convert:
             async with app.run_test():
                 app.output_directory = str(output_dir)

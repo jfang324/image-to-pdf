@@ -1,3 +1,4 @@
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.message import Message
@@ -8,7 +9,8 @@ from textual.widgets.selection_list import Selection
 
 
 class FileSelector(Widget):
-    """A widget that allows users to select from a list of files
+    """
+    A FileSelector widget that allows the user to select files from a directory.
 
     Attributes:
         title (str): The title to be displayed in the widget border
@@ -33,7 +35,8 @@ class FileSelector(Widget):
     file_list: reactive[list[tuple[str, str, bool]]] = reactive([])
 
     class SelectionChanged(Message):
-        """A custom message to inform the parent of a change in selected items
+        """
+        Message to indicate that the selection list has changed
 
         Attributes:
             selected_files (list[str]): A list of paths for the currently selected files
@@ -71,8 +74,10 @@ class FileSelector(Widget):
             yield SelectionList[str](id="file_list")
 
     def _build_selection_list(self) -> None:
+        """Builds the SelectionList with the current file_list"""
         selection_list = self.query_one("#file_list", SelectionList)
         selections = [Selection(name, path, selected) for name, path, selected in self.file_list]
+
         selection_list.clear_options()
         selection_list.add_options(selections)
 
@@ -83,7 +88,9 @@ class FileSelector(Widget):
 
         self._previous_selection = set()
 
-    def on_selection_list_selected_changed(self, event: SelectionList.SelectedChanged) -> None:
+    @on(SelectionList.SelectedChanged)
+    def _signal_selection_changed(self, event: SelectionList.SelectedChanged) -> None:
+        """Signals parent widget that the selection list has changed"""
         selected_files: list[str] = event.selection_list.selected
         deselected: list[str] = list(self._previous_selection - set(selected_files))
 

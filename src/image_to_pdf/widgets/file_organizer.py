@@ -1,5 +1,6 @@
 import os
 
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Vertical
 from textual.message import Message
@@ -9,13 +10,15 @@ from textual.widgets import Label, ListItem, ListView
 
 
 class FileOrganizer(Widget):
-    """Widget that allows users to swap positions of files in a list
+    """
+    A FileOrganizer widget that allows the user to select and organize files.
 
     Attributes:
         title (str): The title to be displayed in the widget border
 
     Reactive Attributes:
         file_list (list[str]): A list of full paths for the currently selected files
+        _selected_swap_indices (set[int]): A set of indices for the currently selected items in the list view
     """
 
     DEFAULT_CSS = """
@@ -41,7 +44,8 @@ class FileOrganizer(Widget):
     _selected_swap_indices: reactive[set[int]] = reactive(set)
 
     class SwapRequest(Message):
-        """A custom message to inform the parent that the position of 2 files needs to be swapped
+        """
+        Message to request 2 selected items in the file_list to be swapped
 
         Attributes:
             index_1 (int): The index of the first item to swap
@@ -69,13 +73,17 @@ class FileOrganizer(Widget):
             yield ListView(id="file_list")
 
     def _build_list_view(self) -> None:
+        """Builds the list view with the current file_list"""
         list_view = self.query_one("#file_list", ListView)
         list_items = [ListItem(Label(os.path.basename(path))) for path in self.file_list]
+
         list_view.clear()
         list_view.extend(list_items)
+
         self._selected_swap_indices = set()
 
     def watch_file_list(self) -> None:
+        """Watches the file_list reactive attribute and rebuilds the list view when it changes"""
         self._build_list_view()
 
     def watch__selected_swap_indices(self) -> None:
@@ -91,7 +99,8 @@ class FileOrganizer(Widget):
             else:
                 child.remove_class("selected-for-swap")
 
-    def on_list_view_selected(self, event: ListView.Selected) -> None:
+    @on(ListView.Selected)
+    def _signal_selected_items_swap(self, event: ListView.Selected) -> None:
         """Toggle selection; when 2 selected, emit swap message"""
         index = event.index
 
