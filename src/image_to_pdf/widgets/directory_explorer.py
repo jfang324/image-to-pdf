@@ -18,7 +18,8 @@ class FilteredDirectoryTree(DirectoryTree):
 
 
 class DirectoryExplorer(Widget):
-    """A widget that allows users to explore directories
+    """
+    A DirectoryExplorer widget that allows the user to navigate through directories and select files.
 
     Attributes:
         title (str): The title to be displayed in the widget border
@@ -42,7 +43,8 @@ class DirectoryExplorer(Widget):
     current_directory: reactive[str] = reactive(".")
 
     class DirectoryChanged(Message):
-        """A custom message to inform the parent the directory has been changed
+        """
+        Message to indicate that the current directory has changed
 
         Attributes:
             new_directory (str): The path of the new root directory
@@ -68,6 +70,7 @@ class DirectoryExplorer(Widget):
             yield FilteredDirectoryTree(self.current_directory, id="directory_tree")
 
     def _reload_directory_tree(self, new_directory: str) -> None:
+        """Reloads the directory tree with the new directory"""
         self.border_subtitle = new_directory
 
         if self._is_mounted:
@@ -77,15 +80,19 @@ class DirectoryExplorer(Widget):
             directory_tree.root.collapse()
 
     def watch_current_directory(self) -> None:
+        """Watches the current_directory reactive attribute and reloads the directory tree when it changes"""
         self._reload_directory_tree(self.current_directory)
 
-    def on_directory_tree_directory_selected(self, event: DirectoryTree.DirectorySelected) -> None:
+    @on(DirectoryTree.DirectorySelected)
+    def _signal_navigate_to_child_directory(self, event: DirectoryTree.DirectorySelected) -> None:
+        """Signals parent widget that the current directory has changed to a child directory"""
         new_directory = str(event.path)
 
         self.post_message(self.DirectoryChanged(new_directory, self))
 
     @on(events.Key)
-    def on_key(self, event: events.Key) -> None:
+    def _signal_navigate_to_parent_directory(self, event: events.Key) -> None:
+        """Signals parent widget that the current directory has changed to the parent directory"""
         if event.key != "escape":
             return
 

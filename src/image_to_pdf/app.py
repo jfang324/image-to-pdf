@@ -10,24 +10,43 @@ from textual.reactive import reactive
 from textual.widgets import Footer
 
 from .services.file_access_service import convert_images_to_pdf, scan_directory
-from .widgets.directory_explorer import DirectoryExplorer
-from .widgets.file_organizer import FileOrganizer
-from .widgets.file_selector import FileSelector
-from .widgets.save_modal import SaveModal
+from .widgets import DirectoryExplorer, FileOrganizer, FileSelector, SaveModal
 
 
 @dataclass
 class PDFConfig:
-    quality: int = 75
-    optimize: bool = False
-
-
-class ImageToPDFApp(App):
-    """The core Textual application class for top level event handling
+    """
+    A data container for PDF configuration options
 
     Attributes:
         quality (int): An integer ranging from 1 to 100 that determines how much quality is preserved in the PDF generation
         optimize (bool): Whether or not an effort will be made to compress the final PDF
+    """
+
+    quality: int
+    optimize: bool
+
+    def __init__(self, quality: int = 75, optimize: bool = False) -> None:
+        if quality < 1 or quality > 100:
+            raise ValueError("quality must be between 1 and 100")
+
+        self.quality = quality
+        self.optimize = optimize
+
+
+class ImageToPDFApp(App):
+    """
+    The core Textual application class for top level event handling
+
+    Attributes:
+        quality (int): An integer ranging from 1 to 100 that determines how much quality is preserved in the PDF generation
+        optimize (bool): Whether or not an effort will be made to compress the final PDF
+
+    Reactive Attributes:
+        input_directory (str): The path to the input directory
+        output_directory (str): The path to the output directory
+        input_directory_files (list[tuple[str, str, bool]]): A list of tuples that represent files in the input directory in the format (display_name, path, selected)
+        current_selected_files (list[str]): A list of paths for the currently selected files
     """
 
     DEFAULT_CSS = """
@@ -47,6 +66,10 @@ class ImageToPDFApp(App):
     def __init__(self, quality: int = 75, optimize: bool = False) -> None:
         super().__init__()
         self.config = PDFConfig(quality=quality, optimize=optimize)
+
+        cwd = os.getcwd()
+        self.input_directory = cwd
+        self.output_directory = cwd
 
     def compose(self) -> ComposeResult:
         with Horizontal():
@@ -79,6 +102,7 @@ class ImageToPDFApp(App):
         quality: int,
         optimize: bool,
     ) -> None:
+        """Handles the save request on a separate thread and notifies the user of the result"""
         try:
             start_time = time.perf_counter_ns()
 
@@ -101,9 +125,11 @@ class ImageToPDFApp(App):
             self.log.error("PDF conversion failed", exception=e)
 
     def action_request_save(self) -> None:
+        """Opens the save modal"""
         self.push_screen(SaveModal(), self._on_save_modal_close)
 
     def _on_save_modal_close(self, output_file_name: Union[str, None]) -> None:
+        """Captures user input from the save model and forwards it to the worker"""
         if output_file_name is None:
             return
 
@@ -123,21 +149,16 @@ class ImageToPDFApp(App):
         )
         self.notify("Job started, you will be notified on completion")
 
-    def on_mount(self) -> None:
-        """Initialize on app startup"""
-        cwd = os.getcwd()
-        self.input_directory = cwd
-        self.output_directory = cwd
-
     def scan_directory(self, directory: str) -> list[tuple[str, str, bool]]:
         """Scan the input directory and return a list of (name, path, selected)"""
         try:
             return scan_directory(directory, self.current_selected_files)
-        except OSError as e:
+        except (OSError, ValueError) as e:
             self.notify(message=f"Failed to scan directory: {e}", severity="error")
             return []
 
     def watch_input_directory(self) -> None:
+        """Update the input directory files when the input directory changes"""
         if not self.input_directory:
             return
 
@@ -146,14 +167,17 @@ class ImageToPDFApp(App):
 
     @on(DirectoryExplorer.DirectoryChanged, "#input_directory")
     def on_input_directory_changed(self, event: DirectoryExplorer.DirectoryChanged) -> None:
+        """Update the input directory when the input directory explorer changes"""
         self.input_directory = event.new_directory
 
     @on(DirectoryExplorer.DirectoryChanged, "#output_directory")
     def on_output_directory_changed(self, event: DirectoryExplorer.DirectoryChanged) -> None:
+        """Update the output directory when the output directory explorer changes"""
         self.output_directory = event.new_directory
 
     @on(FileSelector.SelectionChanged)
-    def on_image_selector_selection_changed(self, event: FileSelector.SelectionChanged) -> None:
+    def _updated_current_selected_files(self, event: FileSelector.SelectionChanged) -> None:
+        """Update the current selected files when the image selector selection changes"""
         selected_files = event.selected_files
         deselected_files = set(event.deselected_files)
 
@@ -170,7 +194,8 @@ class ImageToPDFApp(App):
         self.current_selected_files = new_current_selected_files
 
     @on(FileOrganizer.SwapRequest)
-    def on_file_organizer_swap(self, event: FileOrganizer.SwapRequest) -> None:
+    def _handle_file_reorder(self, event: FileOrganizer.SwapRequest) -> None:
+        """Swaps the selected items in current_selected_files"""
         new_current_selected_files = list(self.current_selected_files)
 
         (

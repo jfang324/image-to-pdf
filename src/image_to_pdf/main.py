@@ -4,6 +4,7 @@ from .app import ImageToPDFApp
 
 
 def quality_range(string: str) -> int:
+    """Validates the quality argument"""
     try:
         value = int(string)
     except ValueError:
@@ -29,6 +30,7 @@ def main() -> None:
         action="store_true",
         help="Optimize PDF file size",
     )
+
     args = parser.parse_args()
 
     app = ImageToPDFApp(quality=args.quality, optimize=args.optimize)

@@ -53,6 +53,7 @@ class SaveModal(ModalScreen[Union[str, None]]):
             )
 
     def _validate_and_dismiss(self, value: str) -> None:
+        """Validates the input and dismisses the modal"""
         stripped = value.strip()
         if stripped:
             self.dismiss(stripped)

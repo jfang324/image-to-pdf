@@ -6,14 +6,17 @@ from PIL import Image
 
 def is_image(file_path: str) -> bool:
     """
-    Checks if a file is an image
+    Checks if a file is an image.
 
-    :param file_path: The path to the file
-    :return: True if the file is an image, False otherwise
+    Args:
+        file_path (str): The path to the file
+
+    Returns:
+        bool: True if the file is an image, False otherwise
     """
-
     if not os.path.isfile(file_path):
         return False
+
     try:
         with Image.open(file_path) as img:
             img.verify()
@@ -23,56 +26,82 @@ def is_image(file_path: str) -> bool:
 
 
 def scan_directory(
-    directory: str, current_selected_files: list[str]
+    directory_path: str, current_selected_files: list[str]
 ) -> list[tuple[str, str, bool]]:
     """
     Scan a directory for image files.
 
-    :param directory: The directory path to scan
-    :param current_selected_files: List of currently selected file paths
-    :return: List of (filename, full_path, is_selected) tuples for each image
+    Args:
+        directory_path (str): The path to the directory to scan
+        current_selected_files (list[str]): A list of currently selected file paths
+
+    Returns:
+        list[tuple[str, str, bool]]: A list of tuples containing the filename, full path, and whether the files is contained in the current_selected_files list
+
+    Raises:
+        ValueError: If directory_path is not a directory
     """
-    contents = os.listdir(directory)
+    if not os.path.isdir(directory_path):
+        raise ValueError(f"directory_path must be a valid directory: {directory_path}")
+
+    contents = os.listdir(directory_path)
     selected_set = set(current_selected_files)
     results = []
 
     for path in contents:
         if path.startswith("."):
             continue
-        full_path = os.path.join(directory, path)
+
+        full_path = os.path.join(directory_path, path)
+
         if not is_image(full_path):
             continue
+
         results.append((path, full_path, full_path in selected_set))
 
     return results
 
 
 def convert_images_to_pdf(
-    image_list: list[str],
+    image_paths: list[str],
     output_path: str,
     output_name: str,
     quality: int = 75,
     optimize: bool = False,
-) -> None:
+) -> str:
     """
     Converts a list of images to a PDF file
 
-    :param image_list: A list of image files to be converted
-    :param output_path: The path to the output directory
-    :param output_name: The name of the output PDF file
-    :param quality: PDF quality (1-100, default: 75)
-    :param optimize: Whether to optimize PDF file size (default: False)
-    :raises ValueError: If image_list is empty, output_path is invalid, output_name is empty, or none of the files could be converted
-    """
+    Args:
+        image_paths (list[str]): A list of image file paths to be converted
+        output_path (str): The path to the output directory
+        output_name (str): The name of the output PDF file
+        quality (int, optional): PDF quality (1-100, default: 75). Defaults to 75.
+        optimize (bool, optional): Whether to optimize PDF file size (default: False). Defaults to False.
 
-    if not image_list:
-        raise ValueError("image_list cannot be empty")
+    Returns:
+        str: The full path to the output PDF file
+
+    Raises:
+        ValueError: If any of the following conditions are met:
+            - image_paths is empty
+            - output_path is not a valid directory
+            - output_name is empty
+            - quality is not between 1 and 100
+            - output_path + output_name + ".pdf" already exists
+            - any of the image_paths fail to open
+    """
+    if not image_paths:
+        raise ValueError("image_paths cannot be empty")
 
     if not output_path or not os.path.isdir(output_path):
         raise ValueError(f"output_path must be a valid directory: {output_path}")
 
     if not output_name or not output_name.strip():
         raise ValueError("output_name cannot be empty")
+
+    if quality < 1 or quality > 100:
+        raise ValueError("quality must be between 1 and 100")
 
     full_output_path = f"{os.path.join(output_path, output_name)}.pdf"
 
@@ -83,10 +112,13 @@ def convert_images_to_pdf(
     buffers: list[BytesIO] = []
 
     try:
-        for image in image_list:
-            if is_image(image):
+        for image_path in image_paths:
+            if not is_image(image_path):
+                continue
+
+            try:
                 # Normalize the image by converting it to RGB and to PNG format for lossless embedding
-                with Image.open(image) as img:
+                with Image.open(image_path) as img:
                     if img.mode in ("RGBA", "P"):
                         img = img.convert("RGB")
 
@@ -95,6 +127,8 @@ def convert_images_to_pdf(
                     buffer.seek(0)
                     buffers.append(buffer)
                     images.append(Image.open(buffer))
+            except Exception as e:
+                raise ValueError(f"Failed to open image: {image_path}") from e
 
         if not images:
             raise ValueError("None of the selected files could be converted to images")
@@ -106,6 +140,8 @@ def convert_images_to_pdf(
             save_all=True,
             append_images=images[1:],
         )
+
+        return full_output_path
     finally:
         for img in images:
             img.close()
