@@ -18,7 +18,6 @@ class FileOrganizer(Widget):
 
     Reactive Attributes:
         file_list (list[str]): A list of full paths for the currently selected files
-        _selected_swap_indices (set[int]): A set of indices for the currently selected items in the list view
     """
 
     DEFAULT_CSS = """
@@ -29,8 +28,7 @@ class FileOrganizer(Widget):
 
         FileOrganizer ListView {
             height: 100%;
-            margin-left: 1;
-            margin-right: 1;
+            margin: 0 1;
             padding: 1;
         }
 
@@ -41,6 +39,8 @@ class FileOrganizer(Widget):
     """
 
     file_list: reactive[list[str]] = reactive([], init=False)
+
+    # A set of indices for the currently selected items in the list view
     _selected_swap_indices: reactive[set[int]] = reactive(set)
 
     class SwapRequest(Message):
@@ -50,7 +50,7 @@ class FileOrganizer(Widget):
         Attributes:
             index_1 (int): The index of the first item to swap
             index_2 (int): The index of the second item to swap
-            control (Widget): A reference to the widget sending the message
+            control (Widget): A reference to the FileOrganizer widget
         """
 
         @property
@@ -59,13 +59,29 @@ class FileOrganizer(Widget):
             return self._control
 
         def __init__(self, index_1: int, index_2: int, control: Widget) -> None:
+            """
+            Initializes the SwapRequest message
+
+            Args:
+                index_1 (int): The index of the first item to swap
+                index_2 (int): The index of the second item to swap
+                control (Widget): A reference to the FileOrganizer widget
+            """
             super().__init__()
+
             self.index_1 = index_1
             self.index_2 = index_2
             self._control = control
 
     def __init__(self, title: str = "File Organizer", **kwargs) -> None:
+        """
+        Initializes the FileOrganizer widget
+
+        Args:
+            title (str): The title to be displayed in the widget border. Defaults to "File Organizer".
+        """
         super().__init__(**kwargs)
+
         self.border_title = title
 
     def compose(self) -> ComposeResult:

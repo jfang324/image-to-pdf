@@ -35,8 +35,7 @@ class DirectoryExplorer(Widget):
         }
 
         DirectoryExplorer DirectoryTree {
-            margin-left: 1;
-            margin-right: 1;
+            margin: 0 1;
         }
     """
 
@@ -48,7 +47,7 @@ class DirectoryExplorer(Widget):
 
         Attributes:
             new_directory (str): The path of the new root directory
-            control (Widget): A reference to the widget sending the message
+            control (Widget): A reference to the DirectoryExplorer widget
         """
 
         @property
@@ -57,12 +56,27 @@ class DirectoryExplorer(Widget):
             return self._control
 
         def __init__(self, new_directory: str, control: Widget) -> None:
+            """
+            Initializes the DirectoryChanged message
+
+            Args:
+                new_directory (str): The path of the new root directory
+                control (Widget): A reference to the DirectoryExplorer widget
+            """
             super().__init__()
+
             self.new_directory = new_directory
             self._control = control
 
     def __init__(self, title: str = "Directory Explorer", **kwargs) -> None:
+        """
+        Initializes the DirectoryExplorer widget
+
+        Args:
+            title (str): The title to be displayed in the widget border. Defaults to "Directory Explorer".
+        """
         super().__init__(**kwargs)
+
         self.border_title = title
 
     def compose(self) -> ComposeResult:
