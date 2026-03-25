@@ -26,7 +26,7 @@ class PDFConfig:
     quality: int
     optimize: bool
 
-    def __init__(self, quality: int = 75, optimize: bool = False) -> None:
+    def __post_init__(self, quality: int = 75, optimize: bool = False) -> None:
         if quality < 1 or quality > 100:
             raise ValueError("quality must be between 1 and 100")
 
@@ -39,8 +39,7 @@ class ImageToPDFApp(App):
     The core Textual application class for top level event handling
 
     Attributes:
-        quality (int): An integer ranging from 1 to 100 that determines how much quality is preserved in the PDF generation
-        optimize (bool): Whether or not an effort will be made to compress the final PDF
+        config (PDFConfig): A data container for PDF configuration options
 
     Reactive Attributes:
         input_directory (str): The path to the input directory
@@ -64,6 +63,13 @@ class ImageToPDFApp(App):
     current_selected_files: reactive[list[str]] = reactive([])
 
     def __init__(self, quality: int = 75, optimize: bool = False) -> None:
+        """
+        Initializes the ImageToPDFApp class
+
+        Args:
+            quality (int, optional): An integer ranging from 1 to 100 that determines how much quality is preserved in the PDF generation. Defaults to 75.
+            optimize (bool, optional): Whether or not an effort will be made to compress the final PDF. Defaults to False.
+        """
         super().__init__()
         self.config = PDFConfig(quality=quality, optimize=optimize)
 
@@ -82,6 +88,7 @@ class ImageToPDFApp(App):
                     title="Output Directory",
                     id="output_directory",
                 ).data_bind(current_directory=ImageToPDFApp.output_directory)
+
             with Vertical():
                 yield FileSelector(
                     title="Image Selector",
@@ -89,6 +96,7 @@ class ImageToPDFApp(App):
                     current_directory=ImageToPDFApp.input_directory,
                     file_list=ImageToPDFApp.input_directory_files,
                 )
+
             with Vertical():
                 yield FileOrganizer().data_bind(file_list=ImageToPDFApp.current_selected_files)
         yield Footer()

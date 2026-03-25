@@ -41,7 +41,7 @@ class FileSelector(Widget):
         Attributes:
             selected_files (list[str]): A list of paths for the currently selected files
             deselected_files (list[str]): A list of paths for the files that were de-selected
-            control (Widget): A reference to the widget sending the message
+            control (Widget): A reference to the FileSelector widget
         """
 
         @property
@@ -55,7 +55,16 @@ class FileSelector(Widget):
             deselected_files: list[str],
             control: Widget,
         ) -> None:
+            """
+            Initializes the SelectionChanged message
+
+            Args:
+                selected_files (list[str]): A list of paths for the currently selected files
+                deselected_files (list[str]): A list of paths for the files that were de-selected
+                control (Widget): A reference to the FileSelector widget
+            """
             super().__init__()
+
             self.selected_files = selected_files
             self.deselected_files = deselected_files
             self._control = control
@@ -65,7 +74,14 @@ class FileSelector(Widget):
         title: str = "File Selector",
         **kwargs,
     ) -> None:
+        """
+        Initializes the FileSelector widget
+
+        Args:
+            title (str): The title to be displayed in the widget border. Defaults to "File Selector".
+        """
         super().__init__(**kwargs)
+
         self.border_title = title
         self._previous_selection: set[str] = set()
 
